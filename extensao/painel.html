@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Discadora LIFE</title>
+  <link rel="stylesheet" href="painel.css">
+</head>
+<body>
+  <header>
+    <h1>Discadora LIFE</h1>
+    <div class="acoes">
+      <a class="botao secundario" href="modelo/modelo_discadora.xlsx" download="modelo_discadora.xlsx">Baixar modelo</a>
+      <label class="botao secundario">
+        Importar planilha
+        <input id="arquivo" type="file" accept=".xlsx,.csv" hidden>
+      </label>
+    </div>
+    <p id="infoLista" class="info">Nenhuma planilha importada.</p>
+  </header>
+
+  <main>
+    <p id="contador" class="contador"></p>
+
+    <div class="campo">
+      <span class="rotulo">Nome do lead</span>
+      <span id="nome" class="valor grande">—</span>
+    </div>
+    <div class="campo">
+      <span class="rotulo">Telefone</span>
+      <span id="telefone" class="valor grande">—</span>
+    </div>
+    <div class="campo">
+      <span class="rotulo">Etapa atual (status no Dash)</span>
+      <span id="etapa" class="valor">—</span>
+    </div>
+    <div class="campo">
+      <span class="rotulo">Campanha</span>
+      <span id="campanha" class="valor">—</span>
+    </div>
+
+    <button id="proximo" class="botao principal" disabled>Próximo ▶</button>
+    <p id="status" class="status"></p>
+    <button id="discarDeNovo" class="botao secundario" hidden>Discar este contato de novo</button>
+  </main>
+
+  <details id="configuracoes">
+    <summary>Configurações</summary>
+
+    <fieldset>
+      <legend>Como ligar</legend>
+      <label><input type="radio" name="modo" value="pagina"> Colar o número na página da Api4Com e clicar em ligar</label>
+      <label><input type="radio" name="modo" value="api"> Usar a API da Api4Com (o ramal toca e depois liga para o lead)</label>
+    </fieldset>
+
+    <label>Prefixo antes do número (opcional, ex.: 0, 55 ou +55)
+      <input id="prefixo" type="text" placeholder="vazio = número como está na planilha">
+    </label>
+
+    <div id="cfgPagina">
+      <label>Seletor do campo de número (vazio = automático)
+        <input id="seletorCampo" type="text" placeholder="ex.: #numero">
+      </label>
+      <label>Seletor do botão Ligar (vazio = automático)
+        <input id="seletorBotao" type="text" placeholder="ex.: button.btn-ligar">
+      </label>
+      <label class="linha"><input id="usarEnter" type="checkbox"> Ligar apertando Enter em vez de clicar no botão</label>
+      <button id="testar" class="botao secundario" type="button">Testar: mostrar campo e botão na página (não liga)</button>
+    </div>
+
+    <div id="cfgApi">
+      <label>Token da Api4Com
+        <input id="token" type="password" autocomplete="off">
+      </label>
+      <label>Ramal
+        <input id="ramal" type="text" placeholder="ex.: 1001">
+      </label>
+    </div>
+
+    <button id="salvar" class="botao secundario" type="button">Salvar configurações</button>
+    <p id="statusConfig" class="info"></p>
+  </details>
+
+  <script src="planilha.js"></script>
+  <script src="painel.js"></script>
+</body>
+</html>

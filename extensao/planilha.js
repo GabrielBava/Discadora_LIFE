@@ -1,0 +1,178 @@
+// Leitura de planilhas .xlsx e .csv sem bibliotecas externas.
+// Devolve sempre uma matriz de linhas: [["Nome", "Telefone", ...], [...], ...]
+
+const Planilha = (() => {
+  async function lerArquivo(arquivo) {
+    const nome = arquivo.name.toLowerCase();
+    const buffer = await arquivo.arrayBuffer();
+    if (nome.endsWith('.xlsx')) return lerXlsx(buffer);
+    if (nome.endsWith('.csv') || nome.endsWith('.txt')) return lerCsv(decodificarTexto(buffer));
+    throw new Error('Formato não suportado. Salve a planilha como .xlsx ou .csv.');
+  }
+
+  // ---------- CSV ----------
+
+  // Exportações do Excel em português costumam vir em Windows-1252, não UTF-8.
+  function decodificarTexto(buffer) {
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    } catch {
+      return new TextDecoder('windows-1252').decode(buffer);
+    }
+  }
+
+  function lerCsv(texto) {
+    const primeiraLinha = texto.split(/\r?\n/, 1)[0] || '';
+    const contar = (c) => primeiraLinha.split(c).length - 1;
+    const separador = [';', ',', '\t'].sort((a, b) => contar(b) - contar(a))[0];
+
+    const linhas = [];
+    let linha = [];
+    let campo = '';
+    let entreAspas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      if (entreAspas) {
+        if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+        else if (c === '"') entreAspas = false;
+        else campo += c;
+      } else if (c === '"') {
+        entreAspas = true;
+      } else if (c === separador) {
+        linha.push(campo); campo = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && texto[i + 1] === '\n') i++;
+        linha.push(campo); linhas.push(linha);
+        linha = []; campo = '';
+      } else {
+        campo += c;
+      }
+    }
+    if (campo !== '' || linha.length) { linha.push(campo); linhas.push(linha); }
+    return limpar(linhas);
+  }
+
+  // ---------- XLSX (arquivo zip com XML dentro) ----------
+
+  async function lerXlsx(buffer) {
+    const zip = abrirZip(buffer);
+    const xml = async (caminho) => {
+      const texto = await zip.lerTexto(caminho);
+      return texto == null ? null : new DOMParser().parseFromString(texto, 'application/xml');
+    };
+    const filhos = (no, nome) => [...no.getElementsByTagNameNS('*', nome)];
+
+    // Textos compartilhados (onde o Excel guarda a maioria dos textos)
+    const compartilhados = [];
+    const docTextos = await xml('xl/sharedStrings.xml');
+    if (docTextos) {
+      for (const si of filhos(docTextos, 'si')) compartilhados.push(textoRico(si));
+    }
+
+    // Primeira aba da pasta de trabalho
+    let caminhoAba = 'xl/worksheets/sheet1.xml';
+    const docPasta = await xml('xl/workbook.xml');
+    const docRels = await xml('xl/_rels/workbook.xml.rels');
+    const primeira = docPasta && filhos(docPasta, 'sheet')[0];
+    if (primeira && docRels) {
+      const idRel = [...primeira.attributes].find((a) => a.localName === 'id')?.value;
+      const rel = filhos(docRels, 'Relationship').find((r) => r.getAttribute('Id') === idRel);
+      const alvo = rel?.getAttribute('Target');
+      if (alvo) caminhoAba = alvo.startsWith('/') ? alvo.slice(1) : 'xl/' + alvo.replace(/^\.\//, '');
+    }
+    const docAba = await xml(caminhoAba);
+    if (!docAba) throw new Error('Não encontrei a primeira aba da planilha.');
+
+    const linhas = [];
+    let proximaLinha = 0;
+    for (const row of filhos(docAba, 'row')) {
+      const r = parseInt(row.getAttribute('r'), 10);
+      const indiceLinha = Number.isFinite(r) ? r - 1 : proximaLinha;
+      proximaLinha = indiceLinha + 1;
+      const valores = [];
+      let proximaColuna = 0;
+      for (const c of filhos(row, 'c')) {
+        const ref = c.getAttribute('r');
+        const col = ref ? indiceColuna(ref) : proximaColuna;
+        proximaColuna = col + 1;
+        valores[col] = valorCelula(c, compartilhados, filhos);
+      }
+      linhas[indiceLinha] = Array.from(valores, (v) => v ?? '');
+    }
+    return limpar(Array.from(linhas, (l) => l ?? []));
+  }
+
+  function valorCelula(c, compartilhados, filhos) {
+    const tipo = c.getAttribute('t');
+    const v = filhos(c, 'v')[0]?.textContent ?? '';
+    if (tipo === 's') return compartilhados[parseInt(v, 10)] ?? '';
+    if (tipo === 'inlineStr') return filhos(c, 'is')[0] ? textoRico(filhos(c, 'is')[0]) : '';
+    if (tipo === 'b') return v === '1' ? 'VERDADEIRO' : 'FALSO';
+    if ((tipo === null || tipo === 'n') && /e/i.test(v) && Number.isFinite(Number(v))) {
+      const n = Number(v); // telefone salvo como número em notação científica
+      return Number.isInteger(n) ? n.toFixed(0) : String(n);
+    }
+    return v;
+  }
+
+  // Junta os trechos <t> de um texto, ignorando a guia fonética (<rPh>)
+  function textoRico(no) {
+    return [...no.getElementsByTagNameNS('*', 't')]
+      .filter((t) => t.parentNode.localName !== 'rPh')
+      .map((t) => t.textContent)
+      .join('');
+  }
+
+  function indiceColuna(ref) {
+    const letras = ref.match(/^[A-Z]+/i)?.[0].toUpperCase() || 'A';
+    let n = 0;
+    for (const l of letras) n = n * 26 + (l.charCodeAt(0) - 64);
+    return n - 1;
+  }
+
+  function abrirZip(buffer) {
+    const dv = new DataView(buffer);
+    let fim = -1;
+    for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 65557); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { fim = i; break; }
+    }
+    if (fim < 0) throw new Error('Arquivo .xlsx inválido ou corrompido.');
+
+    const entradas = {};
+    const total = dv.getUint16(fim + 10, true);
+    let p = dv.getUint32(fim + 16, true);
+    for (let n = 0; n < total; n++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('Arquivo .xlsx inválido ou corrompido.');
+      const tamNome = dv.getUint16(p + 28, true);
+      const nome = new TextDecoder().decode(new Uint8Array(buffer, p + 46, tamNome));
+      entradas[nome.toLowerCase()] = {
+        metodo: dv.getUint16(p + 10, true),
+        tamanho: dv.getUint32(p + 20, true),
+        inicio: dv.getUint32(p + 42, true),
+      };
+      p += 46 + tamNome + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+    }
+
+    return {
+      async lerTexto(caminho) {
+        const e = entradas[caminho.toLowerCase()];
+        if (!e) return null;
+        const dados = e.inicio + 30 + dv.getUint16(e.inicio + 26, true) + dv.getUint16(e.inicio + 28, true);
+        const bytes = new Uint8Array(buffer, dados, e.tamanho);
+        if (e.metodo === 0) return new TextDecoder().decode(bytes);
+        if (e.metodo !== 8) throw new Error('Compressão do .xlsx não suportada.');
+        const fluxo = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        return new Response(fluxo).text();
+      },
+    };
+  }
+
+  // Tira espaços das pontas e remove linhas totalmente vazias
+  function limpar(linhas) {
+    return linhas
+      .map((l) => l.map((v) => String(v ?? '').trim()))
+      .filter((l) => l.some((v) => v !== ''));
+  }
+
+  return { lerArquivo, lerCsv, lerXlsx };
+})();

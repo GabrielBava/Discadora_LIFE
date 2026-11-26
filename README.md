@@ -1,6 +1,9 @@
 # Discadora LIFE
 
-Extensão do Google Chrome (também funciona no Microsoft Edge) que abre um painel lateral e percorre a sua planilha de leads, um contato por vez, ligando pela **Api4Com**.
+Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **Api4Com**. Funciona de dois jeitos, com as mesmas telas:
+
+- **Site (Vercel):** é só abrir o link no navegador. Nada para instalar.
+- **Extensão do Chrome/Edge:** abre como painel na lateral do navegador.
 
 **O que ela faz, e só isso:**
 
@@ -13,7 +16,17 @@ Extensão do Google Chrome (também funciona no Microsoft Edge) que abre um pain
 
 ---
 
-## Instalação (uma vez por computador)
+## Publicar como site na Vercel
+
+O repositório já vem com o `vercel.json` pronto: não há etapa de build, o site é servido a partir da pasta `extensao/`, e as funções em `api/` repassam os pedidos para a Api4Com. Elas existem porque o navegador bloqueia chamadas diretas de um site para a API da Api4Com (CORS), e não guardam nada.
+
+1. Na Vercel: **Add New → Project** e importe este repositório.
+2. Não precisa escolher framework nem comando de build: o `vercel.json` define tudo (inclusive se o projeto tiver sido criado como Angular).
+3. **Deploy.** O endereço do site abre direto na Discadora.
+
+No site, a planilha, o ramal e o token ficam salvos no navegador de cada pessoa (não no servidor).
+
+## Instalar como extensão (opcional, uma vez por computador)
 
 1. Baixe este repositório: botão verde **Code → Download ZIP** no GitHub. Depois extraia o ZIP.
 2. No Chrome, abra `chrome://extensions` (no Edge: `edge://extensions`).
@@ -23,7 +36,7 @@ Extensão do Google Chrome (também funciona no Microsoft Edge) que abre um pain
 
 ## Configuração (uma vez por pessoa)
 
-Clique no ícone da Discadora LIFE e abra **Configurações** no fim do painel:
+Abra a Discadora (site ou ícone da extensão) e clique em **Configurações** no fim do painel:
 
 - **Ramal:** o seu ramal da Api4Com. Ele aparece no topo do Webphone, ao lado de "Usuário".
 - **Token da API:** clique em **Gerar o token com o e-mail e a senha da Api4Com**, preencha e clique em **Gerar token**. A senha vai só para a Api4Com e não fica salva. Se a sua empresa fornecer um token de API, também pode colar direto no campo.
@@ -35,7 +48,7 @@ Se o token vencer, a Discadora avisa: é só gerar de novo.
 ## Como usar
 
 1. Deixe o Webphone da Api4Com logado e **Online**.
-2. Clique no ícone da **Discadora LIFE**. O painel abre na lateral direita.
+2. Abra a Discadora: o link do site, ou o ícone da extensão (o painel abre na lateral direita).
 3. **Baixar modelo**: baixa `modelo_discadora.xlsx` com as 4 colunas.
 4. Preencha o modelo, ou exporte do CRM uma base com essas 4 informações.
 5. **Importar planilha**: escolha o arquivo `.xlsx` ou `.csv`.
@@ -59,15 +72,17 @@ A lista e a posição ficam salvas: se fechar o painel ou o navegador, ao abrir 
 
 ## Privacidade
 
-A planilha, o ramal e o token ficam salvos **só neste navegador**. A Discadora só se comunica com a Api4Com (`api.api4com.com`), e só em dois momentos: ao gerar o token e ao pedir cada ligação. Junto com o pedido de ligação vão, como metadados, o nome, a etapa e a campanha do lead.
+A planilha, o ramal e o token ficam salvos **só neste navegador**. A Discadora só se comunica com a Api4Com (`api.api4com.com`; no site, passando pelas funções `api/` da Vercel), e só em dois momentos: ao gerar o token e ao pedir cada ligação. Junto com o pedido de ligação vão, como metadados, o nome, a etapa e a campanha do lead.
 
 ## Arquivos
 
 ```
+vercel.json            configuração do site na Vercel (sem build)
+api/                   funções da Vercel que repassam login e ligação para a Api4Com
 extensao/
-  manifest.json        configuração da extensão
-  painel.html/css/js   painel lateral (tela, planilha, botão Próximo, ligação pela API)
+  painel.html/css/js   a tela (planilha, botão Próximo, ligação pela API)
   planilha.js          leitura de .xlsx e .csv (sem bibliotecas externas)
-  background.js        abre o painel ao clicar no ícone
   modelo/              modelo da planilha (.xlsx)
+  manifest.json        configuração da extensão do Chrome
+  background.js        abre o painel ao clicar no ícone da extensão
 ```

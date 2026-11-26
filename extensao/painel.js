@@ -4,7 +4,28 @@
 // desliga é o usuário no Webphone (ou a Api4Com, ex.: caixa postal). Só avança quando
 // o usuário clica em Próximo.
 
+// O mesmo painel roda como extensão do Chrome ou como site (Vercel).
+// No site, as chamadas passam pelas funções /api/* da própria Vercel, porque o
+// navegador bloqueia chamadas diretas de um site para a API da Api4Com (CORS).
+const EH_EXTENSAO = Boolean(globalThis.chrome?.runtime?.id);
 const API4COM = 'https://api.api4com.com/api/v1';
+const URL_DISCAR = EH_EXTENSAO ? `${API4COM}/dialer` : '/api/discar';
+const URL_LOGIN = EH_EXTENSAO ? `${API4COM}/users/login` : '/api/login';
+
+// Onde a lista, a posição e a configuração ficam salvas (só neste navegador)
+const armazenamento = EH_EXTENSAO ? chrome.storage.local : {
+  async get(chaves) {
+    const r = {};
+    for (const k of chaves) {
+      const v = localStorage.getItem('discadora:' + k);
+      if (v !== null) r[k] = JSON.parse(v);
+    }
+    return r;
+  },
+  async set(valores) {
+    for (const [k, v] of Object.entries(valores)) localStorage.setItem('discadora:' + k, JSON.stringify(v));
+  },
+};
 
 const CONFIG_PADRAO = { ramal: '', token: '' };
 
@@ -70,7 +91,7 @@ function numeroInternacional(digitos) {
 
 async function discarPelaApi(numero, contato) {
   const { token, ramal } = estado.config;
-  const resposta = await fetch(`${API4COM}/dialer`, {
+  const resposta = await fetch(URL_DISCAR, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: token },
     body: JSON.stringify({
@@ -124,7 +145,7 @@ async function ligarContatoAtual() {
 async function proximo() {
   if (estado.indice + 1 >= estado.contatos.length) return;
   estado.indice++;
-  await chrome.storage.local.set({ indice: estado.indice });
+  await armazenamento.set({ indice: estado.indice });
   mostrarContato();
   await ligarContatoAtual();
 }
@@ -168,7 +189,7 @@ async function importar() {
     const { contatos, ignoradas } = montarContatos(await Planilha.lerArquivo(arquivo));
     if (!contatos.length) throw new Error('Nenhum contato com telefone foi encontrado na planilha.');
     Object.assign(estado, { arquivo: arquivo.name, contatos, ignoradas, indice: -1 });
-    await chrome.storage.local.set({ arquivo: arquivo.name, contatos, ignoradas, indice: -1 });
+    await armazenamento.set({ arquivo: arquivo.name, contatos, ignoradas, indice: -1 });
     $('discarDeNovo').hidden = true;
     mostrarStatus('Planilha importada.', 'ok');
   } catch (erro) {
@@ -192,7 +213,7 @@ function preencherFormulario(c) {
 
 async function salvarConfig() {
   estado.config = lerFormulario();
-  await chrome.storage.local.set({ config: estado.config });
+  await armazenamento.set({ config: estado.config });
   $('statusConfig').textContent = 'Configurações salvas.';
 }
 
@@ -203,7 +224,7 @@ async function gerarToken() {
   if (!email || !senha) { $('statusConfig').textContent = 'Preencha o e-mail e a senha.'; return; }
   $('statusConfig').textContent = 'Gerando token…';
   try {
-    const resposta = await fetch(`${API4COM}/users/login`, {
+    const resposta = await fetch(URL_LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: senha }),
@@ -223,7 +244,7 @@ async function gerarToken() {
 // ---------- Início ----------
 
 async function iniciar() {
-  const salvo = await chrome.storage.local.get(['arquivo', 'contatos', 'ignoradas', 'indice', 'config']);
+  const salvo = await armazenamento.get(['arquivo', 'contatos', 'ignoradas', 'indice', 'config']);
   estado = {
     arquivo: salvo.arquivo || '',
     contatos: salvo.contatos || [],

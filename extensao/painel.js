@@ -14,7 +14,7 @@
 const MODO_GOOGLE = Boolean(globalThis.google?.script?.run);
 const EH_EXTENSAO = !MODO_GOOGLE && Boolean(globalThis.chrome?.runtime?.id);
 const API4COM = 'https://api.api4com.com/api/v1';
-const URL_DISCAR = EH_EXTENSAO ? `${API4COM}/dialer` : '/api/discar';
+const URL_DISCAR = '/api/discar'; // só no site; a extensão chama a Api4Com direto
 const URL_LOGIN = EH_EXTENSAO ? `${API4COM}/users/login` : '/api/login';
 
 // Chama uma função do Codigo.gs (só no modo Planilhas Google)
@@ -54,6 +54,7 @@ const estado = {
   colRegistro: {},           // em que coluna da planilha original estavam os registros
   contatos: [],              // um por linha da planilha (inclusive linhas sem telefone)
   atual: -1,                 // índice do lead em atendimento
+  ultimaChamada: '',         // id da última ligação (para encerrar antes da próxima)
   filtroEtapa: '',           // '' = todas as etapas
   ignoradas: 0,
   config: { ...CONFIG_PADRAO },
@@ -187,24 +188,51 @@ const hora = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit',
 
 // ---------- Ligação ----------
 
-async function discarPelaApi(numero, contato) {
+// Respostas de POST /calls, conforme a documentação da Api4Com
+function mensagemErroApi4com(status, detalhe = '') {
+  const mensagens = {
+    401: 'A Api4Com recusou o token (inválido, removido ou vencido). Atualize o token em Configurações.',
+    402: 'O plano ou a situação do seu usuário na Api4Com não permite ligar agora. Fale com o administrador da conta.',
+    403: 'O plano ou a situação do seu usuário na Api4Com não permite ligar agora. Fale com o administrador da conta.',
+    404: 'Ramal não encontrado na Api4Com. Confira o ramal em Configurações.',
+    422: 'A Api4Com não aceitou o número. Confira o telefone deste lead na planilha.',
+    424: 'O Webphone não atendeu. Deixe o Webphone da Api4Com aberto e "Online" no PC (em um navegador só) e tente de novo.',
+    429: 'Muitas ligações em pouco tempo (limite da Api4Com: 15 por minuto). Espere um pouco e tente de novo.',
+    503: 'A Api4Com está temporariamente indisponível. Tente de novo em alguns segundos.',
+  };
+  return mensagens[status] || `A Api4Com recusou a ligação (HTTP ${status}). ${String(detalhe).slice(0, 200)}`;
+}
+
+// POST /calls: a Api4Com liga para o ramal (o Webphone atende sozinho) e depois para o lead.
+// Uma ligação por vez: a anterior, se ainda estiver ativa, é encerrada antes.
+async function discarPelaApi(numero) {
   const { token, ramal } = estado.config;
-  const resposta = await fetch(URL_DISCAR, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: token } : {}) },
-    body: JSON.stringify({
-      extension: ramal,
-      phone: numero,
-      metadata: { nome: contato.nome, etapa: contato.etapa, campanha: contato.campanha },
-    }),
-  });
-  if (resposta.status === 401) {
-    throw new Error('A Api4Com recusou o token (vencido, inválido ou não configurado). Atualize o token em Configurações ou na Vercel.');
+  let resposta;
+  if (EH_EXTENSAO) {
+    const cabecalhos = { 'Content-Type': 'application/json', Authorization: token };
+    if (estado.ultimaChamada) {
+      const fim = await fetch(`${API4COM}/calls/${encodeURIComponent(estado.ultimaChamada)}/hangup`, { method: 'POST', headers: cabecalhos }).catch(() => null);
+      if (fim?.ok) await new Promise((r) => setTimeout(r, 1500));
+    }
+    resposta = await fetch(`${API4COM}/calls`, {
+      method: 'POST',
+      headers: cabecalhos,
+      body: JSON.stringify({
+        extension: ramal, caller: ramal, called: numero,
+        metadata: { gateway: 'discadora-life', callRef: `dl-${Date.now()}` },
+      }),
+    });
+  } else {
+    resposta = await fetch(URL_DISCAR, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: token } : {}) },
+      body: JSON.stringify({ extension: ramal, called: numero, encerrar: estado.ultimaChamada || undefined }),
+    });
   }
-  if (!resposta.ok) {
-    const detalhe = (await resposta.text().catch(() => '')).slice(0, 200);
-    throw new Error(`A Api4Com recusou a ligação (HTTP ${resposta.status}). ${detalhe}`);
-  }
+  estado.ultimaChamada = '';
+  const texto = await resposta.text().catch(() => '');
+  if (!resposta.ok) throw new Error(mensagemErroApi4com(resposta.status, texto));
+  try { estado.ultimaChamada = JSON.parse(texto).id || ''; } catch { /* sem id */ }
 }
 
 // Dispara a ligação do lead atual e registra a data/hora do disparo
@@ -242,7 +270,7 @@ async function discarAtual() {
       };
       contato.ligadoEm = Date.now();
     } else {
-      await discarPelaApi(numero, contato);
+      await discarPelaApi(numero);
       contato.ligadoEm = Date.now();
       tela.mensagem = enviada(ramal, contato.ligadoEm);
     }
@@ -611,7 +639,17 @@ async function gerarToken() {
     });
     const dados = await resposta.json().catch(() => ({}));
     if (!resposta.ok || !dados.id) throw new Error(`HTTP ${resposta.status}`);
-    $('token').value = dados.id;
+    let token = dados.id;
+    if (EH_EXTENSAO) {
+      // Troca o token do login (temporário) por um que nunca expira
+      const permanente = await fetch(`${API4COM}/users/accessTokens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: token },
+        body: JSON.stringify({ ttl: -1 }),
+      }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+      token = permanente.id || token;
+    }
+    $('token').value = token;
     $('senha').value = '';
     await salvarConfig();
     $('statusConfig').textContent = 'Token gerado e salvo.';
@@ -624,7 +662,7 @@ async function gerarToken() {
 // ---------- Início ----------
 
 async function iniciar() {
-  const chaves = ['arquivo', 'cabecalho', 'colRegistro', 'contatos', 'atual', 'filtroEtapa', 'ignoradas', 'config'];
+  const chaves = ['arquivo', 'cabecalho', 'colRegistro', 'contatos', 'atual', 'ultimaChamada', 'filtroEtapa', 'ignoradas', 'config'];
   const salvo = await armazenamento.get(chaves).catch(() => ({}));
   // Listas salvas pela versão anterior não tinham estes campos
   const contatos = (salvo.contatos || []).map((c) => ({
@@ -636,6 +674,7 @@ async function iniciar() {
     colRegistro: salvo.colRegistro || {},
     contatos,
     atual: Number.isInteger(salvo.atual) ? salvo.atual : -1,
+    ultimaChamada: salvo.ultimaChamada || '',
     filtroEtapa: salvo.filtroEtapa || '',
     ignoradas: salvo.ignoradas || 0,
     config: {

@@ -11,9 +11,9 @@ Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **
 1. Você importa a planilha com **Nome, Telefone, Etapa e Campanha** e vê a contagem de leads: total, da etapa escolhida e quantos faltam ligar.
 2. Se quiser, filtra uma **etapa** para ligar só para os leads dela.
 3. Você clica em **Ligar**: o painel mostra o lead (nome, telefone, etapa atual e campanha) e pede para a Api4Com **ligar do seu ramal para o lead**. A ligação acontece no seu **Webphone da Api4Com**, e a data/hora do disparo fica registrada.
-4. A ligação fica em andamento. **A Discadora nunca desliga**: quem desliga é você no Webphone, ou a própria Api4Com (por exemplo, quando cai na caixa postal).
+4. A ligação fica em andamento. **A Discadora não desliga sozinha**: quem desliga é você no Webphone, ou a própria Api4Com (por exemplo, quando cai na caixa postal). A única exceção: a Api4Com só permite **uma ligação por vez**, então, quando você clica para ligar para o próximo (ou discar de novo), a Discadora encerra antes a ligação anterior, se ela ainda estiver ativa.
 5. Ao terminar, você registra o resultado:
-   - **Não atendeu**: registra e já liga para o próximo lead da etapa.
+   - **Não atendeu**: registra, encerra a ligação (se o lead ainda estiver chamando) e já liga para o próximo lead da etapa.
    - **Atendeu**: abre um campo para anotar o que foi falado. Depois, **Salvar e ligar para o próximo** ou **Só salvar** (para pausar).
 6. Nada é discado sem o seu clique. **Exportar planilha** baixa a planilha com as colunas **Data/hora da ligação, Resultado e Anotação** preenchidas.
 
@@ -40,7 +40,7 @@ Configuração única, uns 5 minutos:
 
 **No dia a dia:**
 
-- Deixe o **Webphone da Api4Com aberto e Online no PC**: a ligação sai pelo ramal 1204, que toca nesse Webphone. Você pode disparar as ligações pelo celular.
+- Deixe o **Webphone da Api4Com aberto e Online no PC**, em **um navegador só**. A Api4Com liga primeiro para o seu ramal (o Webphone atende sozinho) e depois para o lead. Você pode disparar as ligações pelo celular. Com o Webphone fechado ou offline, a Discadora avisa: "O Webphone não atendeu".
 - Lead novo: cole na planilha e clique em **Atualizar planilha** na Discadora.
 - Na primeira ligação, a Discadora cria logo depois da última coluna: **Data/hora da ligação**, **Resultado** e **Anotação**. Se essas colunas já existirem, ela usa as que existem.
 - Se a planilha mudar de ordem enquanto você liga, a Discadora encontra o lead pelo telefone antes de gravar.
@@ -76,7 +76,7 @@ No site, a planilha e os registros ficam salvos no navegador de cada pessoa (nã
 As **Configurações** ficam no fim do painel e são **protegidas por senha** (peça ao administrador). Elas voltam a trancar ao recarregar a página ou ao clicar em **Trancar**.
 
 - **Ramal:** já vem com o ramal padrão (`1204`). Quem usar outro ramal troca aqui. Ele aparece no topo do Webphone, ao lado de "Usuário".
-- **Token da API:**
+- **Token da API:** de preferência um token que **nunca expira**. No Portal da Api4Com, ele fica em **Tokens de acesso → Novo Token de Acesso → validade "Nunca expira"**. O botão **Gerar o token com o e-mail e a senha** também já cria um token sem validade.
   - **No site**, se o `API4COM_TOKEN` estiver configurado na Vercel, não precisa preencher (o painel avisa).
   - **Na extensão**, ou para usar um token próprio no site, cole o token ou clique em **Gerar o token com o e-mail e a senha da Api4Com**. A senha vai só para a Api4Com e não fica salva.
 
@@ -124,9 +124,18 @@ Se der erro ao ligar, aparecem **Discar de novo** e **Pular lead**. Para ligar d
 
 O resultado pode ser `Atendeu`, `Não atendeu` ou `Pulado`. A data/hora é uma data de verdade no Excel (dá para filtrar e ordenar).
 
+## Como a Discadora fala com a Api4Com
+
+Segue a documentação oficial ("Integração utilizando Webphone API4COM", em developers.api4com.com):
+
+- **Ligar:** `POST /calls` com `extension` e `caller` (o ramal) e `called` (o número em `+55DDDNÚMERO`). A rota antiga `/dialer` foi descontinuada pela Api4Com e não é mais usada.
+- **Encerrar a anterior:** `POST /calls/{id}/hangup`, só quando você pede a próxima ligação e a anterior ainda está ativa.
+- **Dados enviados:** no `metadata` da ligação vão só um identificador da Discadora e um código da tentativa. A Api4Com orienta não mandar dados pessoais ali (nome, telefone).
+- **Limite da Api4Com:** 15 ligações por minuto por ramal.
+
 ## Privacidade
 
-A planilha, os registros das ligações, o ramal e o token ficam salvos **só neste navegador**. A Discadora só se comunica com a Api4Com (`api.api4com.com`; no site, passando pelas funções `api/` da Vercel), e só em dois momentos: ao gerar o token e ao pedir cada ligação. Junto com o pedido de ligação vão, como metadados, o nome, a etapa e a campanha do lead.
+A planilha, os registros das ligações, o ramal e o token ficam salvos **só neste navegador**. A Discadora só se comunica com a Api4Com (`api.api4com.com`; no site, passando pelas funções `api/` da Vercel), e só em dois momentos: ao gerar o token e ao pedir cada ligação. Junto com o pedido de ligação vão só o ramal e o número do lead (sem nome, etapa ou campanha).
 
 ## Arquivos
 

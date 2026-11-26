@@ -9,12 +9,19 @@
  *  - grava "Data/hora da ligação", "Resultado" e "Anotação" nas colunas ao lado dos dados.
  *
  * O token NÃO fica neste código: ele é salvo pela tela de Configurações da Discadora
- * (PropertiesService, privado da sua conta). A Discadora nunca desliga ligações.
+ * (PropertiesService, privado da sua conta).
+ *
+ * Ligações (documentação oficial: developers.api4com.com, "Integração utilizando Webphone
+ * API4COM"): POST /calls liga primeiro para o ramal, o Webphone atende sozinho e então a
+ * Api4Com liga para o lead. A Api4Com aceita uma ligação por vez por usuário; por isso,
+ * quando o usuário clica para ligar de novo, a ligação anterior (se ainda estiver ativa)
+ * é encerrada antes. Fora isso, a Discadora não desliga nada.
  */
 
 const API4COM = 'https://api.api4com.com/api/v1';
 const RAMAL_PADRAO = '1204';
 const TITULOS_REGISTRO = { ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação' };
+const GATEWAY = 'discadora-life';
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('Discadora')
@@ -42,6 +49,7 @@ function lerPlanilha() {
 /**
  * Liga para o lead e grava a data/hora do disparo na planilha.
  * ref = { linha, numero, colTelefone } (o servidor confere a linha pelo telefone).
+ * dados = { telefone } no formato +55DDDNUMERO.
  */
 function discar(ref, dados) {
   const config = config_();
@@ -49,28 +57,38 @@ function discar(ref, dados) {
     return { erro: 'Nenhum token da Api4Com salvo. Abra Configurações, cole o token e clique em Salvar.' };
   }
   const trava = LockService.getScriptLock();
-  trava.waitLock(20000);
+  trava.waitLock(30000);
   try {
     const aba = aba_();
     const linha = localizar_(aba, ref);
-    const resposta = UrlFetchApp.fetch(`${API4COM}/dialer`, {
+    const props = PropertiesService.getUserProperties();
+
+    // Uma ligação por vez: encerra a anterior, se ainda estiver ativa
+    const anterior = props.getProperty('ULTIMA_CHAMADA');
+    if (anterior) {
+      if (encerrar_(anterior, config.token)) Utilities.sleep(1500);
+      props.deleteProperty('ULTIMA_CHAMADA');
+    }
+
+    const resposta = UrlFetchApp.fetch(`${API4COM}/calls`, {
       method: 'post',
       contentType: 'application/json',
       headers: { Authorization: config.token },
       payload: JSON.stringify({
         extension: config.ramal,
-        phone: String(dados.telefone),
-        metadata: { nome: dados.nome, etapa: dados.etapa, campanha: dados.campanha },
+        caller: config.ramal,
+        called: String(dados.telefone),
+        metadata: { gateway: GATEWAY, callRef: `dl-${Date.now()}` },
       }),
       muteHttpExceptions: true,
     });
     const status = resposta.getResponseCode();
-    if (status === 401) {
-      return { erro: 'A Api4Com recusou o token (vencido ou inválido). Salve um token novo em Configurações.' };
-    }
-    if (status < 200 || status >= 300) {
-      return { erro: `A Api4Com recusou a ligação (HTTP ${status}). ${resposta.getContentText().slice(0, 200)}` };
-    }
+    if (status < 200 || status >= 300) return { erro: mensagemErro_(status, resposta.getContentText()) };
+
+    let id = '';
+    try { id = JSON.parse(resposta.getContentText()).id || ''; } catch (e) { /* sem id */ }
+    if (id) props.setProperty('ULTIMA_CHAMADA', id);
+
     const agora = new Date();
     const col = colunasRegistro_(aba);
     aba.getRange(linha, col.ligadoEm).setValue(agora).setNumberFormat('dd/mm/yyyy hh:mm');
@@ -106,22 +124,62 @@ function salvarConfig(novo) {
   return { ramal: config.ramal, tokenSalvo: Boolean(config.token) };
 }
 
-/** Gera o token com e-mail e senha da Api4Com. A senha não é salva. */
+/**
+ * Gera um token que nunca expira com e-mail e senha da Api4Com (login + /users/accessTokens).
+ * A senha não é salva.
+ */
 function gerarToken(email, senha) {
-  const resposta = UrlFetchApp.fetch(`${API4COM}/users/login`, {
+  const login = UrlFetchApp.fetch(`${API4COM}/users/login`, {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify({ email, password: senha }),
     muteHttpExceptions: true,
   });
-  let dados = {};
-  try { dados = JSON.parse(resposta.getContentText()); } catch (e) { /* resposta sem JSON */ }
-  if (resposta.getResponseCode() !== 200 || !dados.id) return { erro: `HTTP ${resposta.getResponseCode()}` };
-  PropertiesService.getUserProperties().setProperty('API4COM_TOKEN', dados.id);
-  return { tokenSalvo: true };
+  const temporario = json_(login).id;
+  if (login.getResponseCode() !== 200 || !temporario) return { erro: `HTTP ${login.getResponseCode()}` };
+
+  const permanente = UrlFetchApp.fetch(`${API4COM}/users/accessTokens`, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: temporario },
+    payload: JSON.stringify({ ttl: -1 }),
+    muteHttpExceptions: true,
+  });
+  const token = (permanente.getResponseCode() === 200 && json_(permanente).id) || temporario;
+  PropertiesService.getUserProperties().setProperty('API4COM_TOKEN', token);
+  return { tokenSalvo: true, semValidade: token !== temporario };
 }
 
 // ---------- Auxiliares (o "_" no fim esconde a função da página) ----------
+
+// Encerra uma ligação feita por POST /calls. Devolve true se ela ainda estava ativa.
+function encerrar_(id, token) {
+  const r = UrlFetchApp.fetch(`${API4COM}/calls/${encodeURIComponent(id)}/hangup`, {
+    method: 'post',
+    headers: { Authorization: token },
+    muteHttpExceptions: true,
+  });
+  return r.getResponseCode() === 200; // 404 = já tinha terminado
+}
+
+// Respostas de POST /calls, conforme a documentação da Api4Com
+function mensagemErro_(status, corpo) {
+  const mensagens = {
+    401: 'A Api4Com recusou o token (inválido, removido ou vencido). Salve um token novo em Configurações.',
+    402: 'O plano ou a situação do seu usuário na Api4Com não permite ligar agora. Fale com o administrador da conta.',
+    403: 'O plano ou a situação do seu usuário na Api4Com não permite ligar agora. Fale com o administrador da conta.',
+    404: 'Ramal não encontrado na Api4Com. Confira o ramal em Configurações.',
+    422: 'A Api4Com não aceitou o número. Confira o telefone deste lead na planilha.',
+    424: 'O Webphone não atendeu. Deixe o Webphone da Api4Com aberto e "Online" no PC (em um navegador só) e tente de novo.',
+    429: 'Muitas ligações em pouco tempo (limite da Api4Com: 15 por minuto). Espere um pouco e tente de novo.',
+    503: 'A Api4Com está temporariamente indisponível. Tente de novo em alguns segundos.',
+  };
+  return mensagens[status] || `A Api4Com recusou a ligação (HTTP ${status}). ${String(corpo || '').slice(0, 200)}`;
+}
+
+function json_(resposta) {
+  try { return JSON.parse(resposta.getContentText()) || {}; } catch (e) { return {}; }
+}
 
 function config_() {
   const props = PropertiesService.getUserProperties();

@@ -1,73 +1,257 @@
+/* Discadora LIFE — identidade visual Grupo Life Brasil */
+
+@font-face { font-family: "Montserrat"; src: url(fontes/montserrat-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Montserrat"; src: url(fontes/montserrat-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Montserrat"; src: url(fontes/montserrat-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Montserrat"; src: url(fontes/montserrat-800.woff2) format("woff2"); font-weight: 800; font-display: swap; }
+
+:root {
+  --laranja: #ff5b14;
+  --laranja-claro: #ff8a3d;
+  --gradiente: linear-gradient(90deg, #ff4d00 0%, #ff7a1a 100%);
+  --preto: #141414;
+  --preto-2: #1f1f1f;
+  --texto: #161616;
+  --cinza: #6b6b6b;
+  --borda: #ececec;
+  --verde: #22c55e;
+  --amarelo: #f5b400;
+  --vermelho: #ef4444;
+}
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
 body {
-  max-width: 480px;
+  max-width: 520px;
   margin: 0 auto;
-  padding: 14px;
-  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: #1f2328;
-  background: #f6f7f9;
+  padding: 18px 16px 28px;
+  font: 14px/1.45 "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: #fff;
 }
 
-h1 { font-size: 18px; margin: 0 0 10px; }
-
-.acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-
-.info { color: #59636e; font-size: 12px; margin: 8px 0 0; }
-
-main {
-  margin: 14px 0;
-  padding: 14px;
-  background: #fff;
-  border: 1px solid #d1d9e0;
-  border-radius: 8px;
+/* ---------- Cabeçalho ---------- */
+.topo { margin-bottom: 16px; }
+.marca {
+  display: inline-flex;
+  align-items: flex-start;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.marca strong { font-weight: 800; }
+.coracao { width: 22px; height: 20px; margin: -8px 0 0 2px; }
+.selo {
+  display: table;
+  margin-top: 10px;
+  padding: 6px 16px;
+  border: 2px solid var(--laranja);
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
 }
 
-.contador { margin: 0 0 10px; font-weight: 600; color: #59636e; }
+/* ---------- Textos utilitários ---------- */
+.info { color: var(--cinza); font-size: 12px; margin: 8px 0 0; }
+.sobretitulo {
+  display: block;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--laranja-claro);
+}
+.sobretitulo.escuro { color: var(--laranja); }
 
-.campo { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid #eef1f4; }
-.rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #59636e; }
-.valor { font-size: 17px; word-break: break-word; }
-.valor.grande { font-size: 22px; font-weight: 700; }
-
-.botao {
-  display: inline-block;
-  padding: 8px 12px;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
-  background: #fff;
-  color: #1f2328;
-  font: inherit;
+/* ---------- Botões ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  font-weight: 600; font-size: 13px; line-height: 1.2;
+  font-family: inherit;
+  color: var(--texto);
   text-decoration: none;
   cursor: pointer;
+  transition: transform 0.08s, filter 0.15s, background 0.15s;
 }
-.botao:hover { background: #eef1f4; }
-.botao:disabled { opacity: .5; cursor: not-allowed; }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible {
+  outline: 3px solid rgba(255, 91, 20, 0.35);
+  outline-offset: 2px;
+}
 
-.botao.principal {
+.btn.contorno { background: #fff; border-color: var(--laranja); }
+.btn.contorno:hover:not(:disabled) { background: #fff3ec; }
+
+.btn.principal {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--gradiente);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: 0 10px 22px rgba(255, 91, 20, 0.28);
+}
+.btn.principal:hover:not(:disabled) { filter: brightness(1.06); }
+
+.btn.escuro { width: 100%; padding: 14px 18px; background: var(--preto); color: #fff; }
+.btn.escuro:hover { background: #262626; }
+
+.seta {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+.seta svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+.duplo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.duplo .btn { flex-direction: column; gap: 2px; width: 100%; padding: 12px 10px; }
+.duplo .btn strong { font-size: 16px; font-weight: 800; }
+.duplo .btn small { font-size: 11px; font-weight: 600; opacity: 0.85; }
+
+.link {
+  display: block;
+  margin: 10px auto 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--cinza);
+  font-weight: 600; font-size: 12px;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Planilha ---------- */
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Números e filtro ---------- */
+.numeros { margin-top: 18px; }
+.filtro { display: block; }
+.filtro select {
   display: block;
   width: 100%;
-  margin-top: 14px;
-  padding: 14px;
-  font-size: 20px;
-  font-weight: 700;
+  margin-top: 6px;
+  padding: 11px 40px 11px 14px;
+  border: 2px solid var(--borda);
+  border-radius: 14px;
+  font-weight: 700; font-size: 14px;
+  font-family: inherit;
+  color: var(--texto);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='%23ff5b14' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center / 18px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.cartoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.cartao-num {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+}
+.cartao-num .num { font-size: 26px; font-weight: 800; line-height: 1.1; color: var(--laranja); }
+.cartao-num .leg { font-size: 11px; font-weight: 600; color: var(--cinza); }
+.cartao-num.destaque { background: var(--preto); border-color: var(--laranja-claro); }
+.cartao-num.destaque .num { color: #fff; }
+.cartao-num.destaque .leg { color: var(--laranja-claro); }
+
+.progresso { height: 8px; margin-top: 12px; border-radius: 999px; background: #eeeeee; overflow: hidden; }
+.barra { width: 0; height: 100%; border-radius: 999px; background: var(--gradiente); transition: width 0.3s; }
+
+/* ---------- Cartão do lead ---------- */
+.palco { position: relative; margin: 22px 0 18px; }
+.palco::before {
+  content: "";
+  position: absolute;
+  inset: 36px -8px -12px 56px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #ff7a1a, #ff4d00);
+}
+.lead {
+  position: relative;
+  padding: 20px;
+  border-radius: 26px;
+  background: linear-gradient(160deg, #1d1d1d 0%, var(--preto) 100%);
   color: #fff;
-  background: #1f883d;
-  border-color: #1a7f37;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
 }
-.botao.principal:hover:not(:disabled) { background: #1a7f37; }
+.nome { margin: 6px 0 0; font-size: 24px; font-weight: 800; line-height: 1.2; word-break: break-word; }
+.frase { margin: 6px 0 0; font-size: 16px; color: #e6e6e6; }
+.frase strong { color: var(--laranja-claro); font-weight: 800; }
 
-.status { min-height: 20px; margin: 10px 0 0; }
-.status.ok { color: #1a7f37; }
-.status.erro { color: #cf222e; }
-
-details { background: #fff; border: 1px solid #d1d9e0; border-radius: 8px; padding: 10px 14px; }
-summary { cursor: pointer; font-weight: 600; }
-details label { display: block; margin: 10px 0; font-size: 13px; }
-details input[type=text], details input[type=password] {
-  display: block; width: 100%; margin-top: 4px; padding: 6px 8px;
-  border: 1px solid #d1d9e0; border-radius: 6px; font: inherit;
+.bloco-tel {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 138, 61, 0.6);
+  border-radius: 16px;
+  background: rgba(255, 91, 20, 0.08);
 }
-details.login { margin: 10px 0; padding: 8px 10px; border-color: #eef1f4; }
-details.login summary { font-weight: 400; font-size: 13px; }
+.telefone { display: block; margin-top: 2px; font-size: 28px; font-weight: 800; letter-spacing: 0.01em; }
+
+.linha-campanha { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.rotulo { font-size: 12px; color: #a3a3a3; }
+.chip { padding: 4px 12px; border-radius: 999px; background: #2b2b2b; font-size: 13px; font-weight: 600; }
+
+.status { display: flex; gap: 8px; margin: 16px 0 0; font-size: 13px; color: #d4d4d4; }
+.status::before { content: ""; flex: none; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #8a8a8a; }
+.status.ok::before { background: var(--verde); }
+.status.atendeu::before { background: var(--verde); }
+.status.aviso::before { background: var(--amarelo); }
+.status.erro { color: #fecaca; }
+.status.erro::before { background: var(--vermelho); }
+
+/* ---------- Controles ---------- */
+.controles { display: grid; gap: 10px; }
+.caixa-anotacao { display: grid; gap: 10px; }
+.caixa-anotacao textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--borda);
+  border-radius: 16px;
+  font-size: 14px; line-height: 1.45;
+  font-family: inherit;
+  resize: vertical;
+}
+.caixa-anotacao textarea:focus { border-color: var(--laranja); outline: none; }
+
+.caixa-fim {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid var(--laranja);
+  border-radius: 20px;
+  background: #fff3ec;
+}
+.caixa-fim strong { font-size: 18px; font-weight: 800; }
+.caixa-fim span { font-size: 13px; color: #4a4a4a; }
+
+/* ---------- Configurações ---------- */
+.configuracoes { margin-top: 22px; padding: 12px 16px; border: 1px solid var(--borda); border-radius: 18px; }
+.configuracoes > summary { cursor: pointer; font-weight: 700; }
+.configuracoes label { display: block; margin: 12px 0; font-size: 13px; }
+.configuracoes input[type=text], .configuracoes input[type=password] {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px 12px;
+  border: 2px solid var(--borda);
+  border-radius: 12px;
+  font: inherit;
+}
+.configuracoes input:focus { border-color: var(--laranja); outline: none; }
+details.login { margin: 12px 0; padding: 8px 12px; border: 1px dashed var(--borda); border-radius: 14px; }
+details.login > summary { cursor: pointer; font-size: 13px; }

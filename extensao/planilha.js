@@ -174,5 +174,113 @@ const Planilha = (() => {
       .filter((l) => l.some((v) => v !== ''));
   }
 
-  return { lerArquivo, lerCsv, lerXlsx };
+  // ---------- Gerar .xlsx ----------
+  // linhas: matriz de células. Texto vira texto; Date vira data/hora do Excel.
+  // A primeira linha sai em negrito e fica congelada (cabeçalho).
+
+  function escreverXlsx(linhas, nomeAba = 'Contatos') {
+    const esc = (t) => String(t)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const letra = (i) => { let s = ''; for (i++; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + ((i - 1) % 26)) + s; return s; };
+    const largura = Math.max(1, ...linhas.map((l) => l.length));
+
+    const xmlLinhas = linhas.map((linha, r) => {
+      const celulas = linha.map((v, c) => {
+        const ref = letra(c) + (r + 1);
+        if (v instanceof Date) return `<c r="${ref}" s="1"><v>${dataParaExcel(v)}</v></c>`;
+        if (v === null || v === undefined || v === '') return '';
+        return `<c r="${ref}" t="inlineStr"${r === 0 ? ' s="2"' : ''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+      }).join('');
+      return `<row r="${r + 1}">${celulas}</row>`;
+    }).join('');
+
+    const ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+    const nsR = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+    const arquivos = {
+      '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+      '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+      'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook ${ns} ${nsR}><sheets><sheet name="${esc(nomeAba)}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      'xl/_rels/workbook.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+      'xl/styles.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet ${ns}><numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy hh:mm"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+      'xl/worksheets/sheet1.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet ${ns}><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="${largura}" width="24" customWidth="1"/></cols><sheetData>${xmlLinhas}</sheetData></worksheet>`,
+    };
+    return new Blob([zipSemCompressao(arquivos)], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+  }
+
+  // Data/hora local <-> número de série do Excel (dias desde 30/12/1899)
+  function dataParaExcel(d) {
+    const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+    return (utc / 86400000 + 25569).toFixed(6);
+  }
+
+  function excelParaData(valor) {
+    const texto = String(valor).trim();
+    if (/^\d+(\.\d+)?$/.test(texto) && Number(texto) > 20000) {
+      const u = new Date(Math.round((Number(texto) - 25569) * 86400) * 1000);
+      return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes(), u.getUTCSeconds());
+    }
+    const m = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    return null;
+  }
+
+  function zipSemCompressao(arquivos) {
+    const tabela = crc32Tabela();
+    const partes = [];
+    const central = [];
+    let posicao = 0;
+    for (const [nome, conteudo] of Object.entries(arquivos)) {
+      const dados = new TextEncoder().encode(conteudo);
+      const bNome = new TextEncoder().encode(nome);
+      let crc = 0xffffffff;
+      for (const b of dados) crc = tabela[(crc ^ b) & 0xff] ^ (crc >>> 8);
+      crc = (crc ^ 0xffffffff) >>> 0;
+
+      const local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);
+      local.setUint16(4, 20, true);
+      local.setUint16(12, 0x5821, true); // data fixa (01/01/2024)
+      local.setUint32(14, crc, true);
+      local.setUint32(18, dados.length, true);
+      local.setUint32(22, dados.length, true);
+      local.setUint16(26, bNome.length, true);
+      partes.push(new Uint8Array(local.buffer), bNome, dados);
+
+      const cd = new DataView(new ArrayBuffer(46));
+      cd.setUint32(0, 0x02014b50, true);
+      cd.setUint16(4, 20, true);
+      cd.setUint16(6, 20, true);
+      cd.setUint16(14, 0x5821, true);
+      cd.setUint32(16, crc, true);
+      cd.setUint32(20, dados.length, true);
+      cd.setUint32(24, dados.length, true);
+      cd.setUint16(28, bNome.length, true);
+      cd.setUint32(42, posicao, true);
+      central.push(new Uint8Array(cd.buffer), bNome);
+      posicao += 30 + bNome.length + dados.length;
+    }
+    const tamanhoCentral = central.reduce((t, p) => t + p.length, 0);
+    const fim = new DataView(new ArrayBuffer(22));
+    fim.setUint32(0, 0x06054b50, true);
+    fim.setUint16(8, Object.keys(arquivos).length, true);
+    fim.setUint16(10, Object.keys(arquivos).length, true);
+    fim.setUint32(12, tamanhoCentral, true);
+    fim.setUint32(16, posicao, true);
+    return new Blob([...partes, ...central, new Uint8Array(fim.buffer)]);
+  }
+
+  function crc32Tabela() {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      t[n] = c >>> 0;
+    }
+    return t;
+  }
+
+  return { lerArquivo, lerCsv, lerXlsx, escreverXlsx, excelParaData };
 })();

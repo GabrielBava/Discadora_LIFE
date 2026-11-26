@@ -2,53 +2,119 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Discadora LIFE</title>
+  <link rel="icon" href="icones/48.png">
   <link rel="stylesheet" href="painel.css">
 </head>
 <body>
-  <header>
-    <h1>Discadora LIFE</h1>
+  <header class="topo">
+    <div class="marca" aria-label="Grupo Life Brasil">
+      Grupo<strong>Life</strong>Brasil
+      <svg class="coracao" viewBox="0 0 32 28" aria-hidden="true">
+        <defs>
+          <linearGradient id="gradCoracao" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FF3B3B"/>
+            <stop offset="1" stop-color="#FF8A1F"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#gradCoracao)" d="M16 28 3.2 15.6C-.9 11.6-1 5.2 3 1.6 6.4-1.4 11.6-.4 14 3.2L16 6.2l2-3c2.4-3.6 7.6-4.6 11-1.6 4 3.6 3.9 10 .1 14Z"/>
+      </svg>
+    </div>
+    <span class="selo">Discadora LIFE</span>
+  </header>
+
+  <section class="planilha">
     <div class="acoes">
-      <a class="botao secundario" href="modelo/modelo_discadora.xlsx" download="modelo_discadora.xlsx">Baixar modelo</a>
-      <label class="botao secundario">
+      <a class="btn contorno" href="modelo/modelo_discadora.xlsx" download="modelo_discadora.xlsx">Baixar modelo</a>
+      <label class="btn contorno">
         Importar planilha
         <input id="arquivo" type="file" accept=".xlsx,.csv" hidden>
       </label>
+      <button id="exportar" class="btn contorno" type="button" disabled>Exportar planilha</button>
     </div>
     <p id="infoLista" class="info">Nenhuma planilha importada.</p>
-  </header>
+  </section>
 
-  <main>
-    <p id="contador" class="contador"></p>
+  <section id="numeros" class="numeros" hidden>
+    <label class="filtro">
+      <span class="sobretitulo escuro">Etapa</span>
+      <select id="filtroEtapa"></select>
+    </label>
+    <div class="cartoes">
+      <div class="cartao-num"><span id="numTotal" class="num">0</span><span class="leg">Total de leads</span></div>
+      <div class="cartao-num"><span id="numEtapa" class="num">0</span><span id="legEtapa" class="leg">Nesta etapa</span></div>
+      <div class="cartao-num destaque"><span id="numFaltam" class="num">0</span><span class="leg">Faltam ligar</span></div>
+    </div>
+    <div class="progresso" aria-hidden="true"><div id="barra" class="barra"></div></div>
+    <p id="resumo" class="info"></p>
+  </section>
 
-    <div class="campo">
-      <span class="rotulo">Nome do lead</span>
-      <span id="nome" class="valor grande">—</span>
-    </div>
-    <div class="campo">
-      <span class="rotulo">Telefone</span>
-      <span id="telefone" class="valor grande">—</span>
-    </div>
-    <div class="campo">
-      <span class="rotulo">Etapa atual (status no Dash)</span>
-      <span id="etapa" class="valor">—</span>
-    </div>
-    <div class="campo">
-      <span class="rotulo">Campanha</span>
-      <span id="campanha" class="valor">—</span>
+  <section class="palco">
+    <article class="lead">
+      <p id="posicao" class="sobretitulo"></p>
+      <h2 id="nome" class="nome">Importe a planilha para começar</h2>
+      <p id="frase" class="frase" hidden>Hoje a etapa é <strong id="etapa"></strong></p>
+      <div id="blocoTelefone" class="bloco-tel" hidden>
+        <span class="sobretitulo">Telefone</span>
+        <span id="telefone" class="telefone"></span>
+      </div>
+      <p id="linhaCampanha" class="linha-campanha" hidden>
+        <span class="rotulo">Campanha</span>
+        <span id="campanha" class="chip"></span>
+      </p>
+      <p id="status" class="status" hidden></p>
+    </article>
+  </section>
+
+  <section class="controles">
+    <button id="btnIniciar" class="btn principal" type="button" hidden>
+      <span id="txtIniciar">Ligar para o próximo</span>
+      <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
+    </button>
+
+    <div id="caixaResultado" class="duplo" hidden>
+      <button id="btnNaoAtendeu" class="btn principal" type="button">
+        <strong>Não atendeu</strong><small>ir para o próximo</small>
+      </button>
+      <button id="btnAtendeu" class="btn escuro" type="button">
+        <strong>Atendeu</strong><small>registrar conversa</small>
+      </button>
     </div>
 
-    <button id="proximo" class="botao principal" disabled>Próximo ▶</button>
-    <p id="status" class="status"></p>
-    <button id="discarDeNovo" class="botao secundario" hidden>Discar este contato de novo</button>
-  </main>
+    <div id="caixaAnotacao" class="caixa-anotacao" hidden>
+      <label for="anotacao" class="sobretitulo escuro">O que foi falado?</label>
+      <textarea id="anotacao" rows="4" placeholder="Ex.: tem interesse, pediu retorno na sexta às 10h."></textarea>
+      <button id="btnSalvarProximo" class="btn principal" type="button">
+        <span>Salvar e ligar para o próximo</span>
+        <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
+      </button>
+      <div class="duplo">
+        <button id="btnSoSalvar" class="btn contorno" type="button">Só salvar</button>
+        <button id="btnCancelarAnotacao" class="btn contorno" type="button">Voltar</button>
+      </div>
+    </div>
 
-  <details id="configuracoes">
+    <div id="caixaErro" class="duplo" hidden>
+      <button id="btnDiscarDeNovo" class="btn principal" type="button"><strong>Discar de novo</strong><small>mesmo lead</small></button>
+      <button id="btnPular" class="btn contorno" type="button"><strong>Pular lead</strong><small>ir para o próximo</small></button>
+    </div>
+
+    <button id="lnkDiscarDeNovo" class="link" type="button" hidden>Discar este lead de novo</button>
+
+    <div id="caixaFim" class="caixa-fim" hidden>
+      <strong>Etapa concluída!</strong>
+      <span>Todos os leads selecionados já foram trabalhados. Exporte a planilha para guardar os registros.</span>
+      <button id="btnExportarFim" class="btn principal" type="button">Exportar planilha</button>
+    </div>
+  </section>
+
+  <details id="configuracoes" class="configuracoes">
     <summary>Configurações</summary>
 
     <p class="info">Para ligar sozinha, a Discadora usa a API da Api4Com: ela manda a Api4Com ligar
-      do seu ramal para o lead, e a ligação acontece no seu Webphone. Sem token, o Próximo apenas
-      copia o número para você colar no Webphone.</p>
+      do seu ramal para o lead, e a ligação acontece no seu Webphone. Sem token, o botão de ligar
+      apenas copia o número para você colar no Webphone.</p>
 
     <label>Seu ramal na Api4Com (aparece no topo do Webphone, ao lado de "Usuário")
       <input id="ramal" type="text" inputmode="numeric" placeholder="ex.: 1001">
@@ -61,11 +127,11 @@
       <summary>Gerar o token com o e-mail e a senha da Api4Com</summary>
       <label>E-mail <input id="email" type="text" autocomplete="off"></label>
       <label>Senha <input id="senha" type="password" autocomplete="off"></label>
-      <button id="gerarToken" class="botao secundario" type="button">Gerar token</button>
+      <button id="gerarToken" class="btn contorno" type="button">Gerar token</button>
       <p class="info">A senha é enviada só para a Api4Com e não fica salva.</p>
     </details>
 
-    <button id="salvar" class="botao secundario" type="button">Salvar configurações</button>
+    <button id="salvar" class="btn contorno" type="button">Salvar configurações</button>
     <p id="statusConfig" class="info"></p>
   </details>
 

@@ -5,13 +5,24 @@
 // usuário no Webphone (ou a Api4Com, ex.: caixa postal). Só liga para o próximo quando
 // o usuário clica. Data/hora, resultado e anotação vão para a planilha exportada.
 
-// O mesmo painel roda como extensão do Chrome ou como site (Vercel).
-// No site, as chamadas passam pelas funções /api/* da própria Vercel, porque o
-// navegador bloqueia chamadas diretas de um site para a API da Api4Com (CORS).
-const EH_EXTENSAO = Boolean(globalThis.chrome?.runtime?.id);
+// O mesmo painel roda de três jeitos:
+// - Planilhas Google (Apps Script): lê os leads da planilha, grava os registros nas
+//   colunas ao lado e liga pelo servidor do Google (google.script.run).
+// - Site (Vercel): importa .xlsx/.csv; as ligações passam pelas funções /api/*,
+//   porque o navegador bloqueia chamadas diretas para a API da Api4Com (CORS).
+// - Extensão do Chrome: importa .xlsx/.csv e chama a Api4Com direto.
+const MODO_GOOGLE = Boolean(globalThis.google?.script?.run);
+const EH_EXTENSAO = !MODO_GOOGLE && Boolean(globalThis.chrome?.runtime?.id);
 const API4COM = 'https://api.api4com.com/api/v1';
 const URL_DISCAR = EH_EXTENSAO ? `${API4COM}/dialer` : '/api/discar';
 const URL_LOGIN = EH_EXTENSAO ? `${API4COM}/users/login` : '/api/login';
+
+// Chama uma função do Codigo.gs (só no modo Planilhas Google)
+function servidor(funcao, ...args) {
+  return new Promise((ok, falha) => {
+    google.script.run.withSuccessHandler(ok).withFailureHandler(falha)[funcao](...args);
+  });
+}
 
 // Onde a lista, a posição e a configuração ficam salvas (só neste navegador)
 const armazenamento = EH_EXTENSAO ? chrome.storage.local : {
@@ -54,7 +65,7 @@ const $ = (id) => document.getElementById(id);
 
 // ---------- Planilha -> contatos ----------
 
-const semAcento = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const semAcento = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 // Regras em ordem de prioridade: "Nome da campanha" vira campanha, "Status do lead"
 // vira etapa, "Telefone" ganha de "Contato", e e-mail/ID nunca viram telefone.
@@ -96,7 +107,7 @@ function montarContatos(linhas) {
 
   const contatos = [];
   let ignoradas = 0;
-  for (const linha of linhas.slice(temCabecalho ? 1 : 0)) {
+  linhas.slice(temCabecalho ? 1 : 0).forEach((linha, posicao) => {
     const pegar = (i) => (i === undefined ? '' : linha[i] || '');
     const telefone = pegar(colunas.telefone);
     // Se a célula tiver mais de um telefone, usa o primeiro
@@ -116,9 +127,10 @@ function montarContatos(linhas) {
       ligadoEmTexto: data ? '' : ligadoEmBruto,
       resultado: pegar(colRegistro.resultado),
       anotacao: pegar(colRegistro.anotacao),
+      posicao, // linha de dados (0 = primeira depois do cabeçalho)
     });
-  }
-  return { cabecalho: temCabecalho ? linhas[0] : null, colRegistro, contatos, ignoradas };
+  });
+  return { cabecalho: temCabecalho ? linhas[0] : null, colRegistro, colTelefone: colunas.telefone, contatos, ignoradas };
 }
 
 // ---------- Fila de ligações ----------
@@ -207,23 +219,33 @@ async function discarAtual() {
   tela.anotando = false;
   tela.mensagem = { texto: `Discando ${telefoneLegivel(contato)}…` };
   render();
+  const enviada = (ramalUsado, quando) => ({
+    texto: `Ligação enviada à Api4Com pelo ramal ${ramalUsado} às ${hora(quando)}. ` +
+      'Se o Webphone tocar, atenda. Ao terminar, registre o resultado.',
+    tipo: 'ok',
+  });
   try {
-    if (!temToken || !ramal) {
+    if (MODO_GOOGLE) {
+      // O servidor liga e já grava a data/hora na planilha
+      const r = await servidor('discar', refPlanilha(contato), {
+        telefone: numero, nome: contato.nome, etapa: contato.etapa, campanha: contato.campanha,
+      });
+      if (r.erro) throw new Error(r.erro);
+      contato.ligadoEm = r.ligadoEm;
+      tela.mensagem = enviada(r.ramal, r.ligadoEm);
+    } else if (!temToken || !ramal) {
       await navigator.clipboard.writeText(contato.numero);
       tela.mensagem = {
         texto: 'Número copiado. Cole no Webphone (Ctrl+V) e clique em Discar. ' +
           'Para ligar sozinha, configure o ramal e o token em Configurações.',
         tipo: 'aviso',
       };
+      contato.ligadoEm = Date.now();
     } else {
       await discarPelaApi(numero, contato);
-      tela.mensagem = {
-        texto: `Ligação enviada à Api4Com pelo ramal ${ramal} às ${hora(Date.now())}. ` +
-          'Se o Webphone tocar, atenda. Ao terminar, registre o resultado.',
-        tipo: 'ok',
-      };
+      contato.ligadoEm = Date.now();
+      tela.mensagem = enviada(ramal, contato.ligadoEm);
     }
-    contato.ligadoEm = Date.now();
     contato.ligadoEmTexto = '';
     await salvar();
   } catch (erro) {
@@ -233,6 +255,9 @@ async function discarAtual() {
     render();
   }
 }
+
+// Onde o lead está na planilha Google (o servidor confere pelo telefone)
+const refPlanilha = (c) => ({ linha: c.posicao + 2, numero: c.numero, colTelefone: estado.colTelefone });
 
 // Só é chamada por clique do usuário
 async function ligarParaProximo() {
@@ -244,19 +269,32 @@ async function ligarParaProximo() {
   await discarAtual();
 }
 
+// Devolve false se não conseguiu gravar (aí não avança para o próximo)
 async function registrar(resultado, anotacao) {
   const contato = contatoAtual();
-  if (!contato) return;
-  contato.resultado = resultado;
-  if (anotacao !== undefined) contato.anotacao = anotacao;
+  if (!contato) return false;
+  const campos = anotacao === undefined ? { resultado } : { resultado, anotacao };
+  if (MODO_GOOGLE) {
+    $('btnSalvarProximo').disabled = $('btnSoSalvar').disabled = true;
+    try {
+      await servidor('registrar', refPlanilha(contato), campos);
+    } catch (erro) {
+      tela.mensagem = { texto: 'Não consegui gravar na planilha: ' + (erro.message || erro), tipo: 'erro' };
+      render();
+      return false;
+    } finally {
+      $('btnSalvarProximo').disabled = $('btnSoSalvar').disabled = false;
+    }
+  }
+  Object.assign(contato, campos);
   tela.anotando = false;
   tela.mensagem = null;
   await salvar();
+  return true;
 }
 
 async function naoAtendeu() {
-  await registrar('Não atendeu');
-  await ligarParaProximo();
+  if (await registrar('Não atendeu')) await ligarParaProximo();
 }
 
 function abrirAnotacao() {
@@ -267,14 +305,41 @@ function abrirAnotacao() {
 }
 
 async function salvarAnotacao(ligarDepois) {
-  await registrar('Atendeu', $('anotacao').value.trim());
+  if (!(await registrar('Atendeu', $('anotacao').value.trim()))) return;
   if (ligarDepois) await ligarParaProximo();
   else render();
 }
 
 async function pular() {
-  await registrar('Pulado');
-  await ligarParaProximo();
+  if (await registrar('Pulado')) await ligarParaProximo();
+}
+
+// Modo Planilhas Google: lê os leads (e os registros já feitos) direto da planilha
+async function carregarPlanilhaGoogle() {
+  tela.mensagem = { texto: 'Lendo a planilha…' };
+  $('btnAtualizar').disabled = true;
+  render();
+  try {
+    const r = await servidor('lerPlanilha');
+    const dados = montarContatos(r.linhas);
+    if (!dados.cabecalho) throw new Error('a linha 1 precisa ter os títulos (Nome, Telefone, Etapa, Campanha).');
+    Object.assign(estado, dados, { arquivo: r.nome });
+    estado.config.ramal = r.ramal;
+    tela.tokenNoServidor = r.tokenSalvo;
+    // Lead em andamento = o último que foi ligado e ainda não tem resultado
+    estado.atual = -1;
+    let maisRecente = 0;
+    estado.contatos.forEach((c, i) => {
+      if (c.numero && c.ligadoEm && !c.resultado && c.ligadoEm >= maisRecente) { estado.atual = i; maisRecente = c.ligadoEm; }
+    });
+    tela.mensagem = null;
+  } catch (erro) {
+    tela.mensagem = { texto: 'Erro ao ler a planilha: ' + (erro.message || erro), tipo: 'erro' };
+  } finally {
+    $('btnAtualizar').disabled = false;
+    render();
+    renderConfig();
+  }
 }
 
 // ---------- Planilha: importar e exportar ----------
@@ -327,7 +392,8 @@ function exportar() {
 async function salvar() {
   const { config, ...dados } = estado;
   try {
-    await armazenamento.set(dados);
+    if (MODO_GOOGLE) await armazenamento.set({ filtroEtapa: estado.filtroEtapa });
+    else await armazenamento.set(dados);
   } catch {
     tela.mensagem = {
       texto: 'Não consegui salvar no navegador (planilha grande demais). Exporte a planilha para não perder os registros.',
@@ -354,9 +420,9 @@ function render() {
 
   // Planilha
   $('infoLista').textContent = comLista
-    ? `${estado.arquivo} · ${validos.length} leads` +
+    ? `${MODO_GOOGLE ? 'Planilha Google: ' : ''}${estado.arquivo} · ${validos.length} leads` +
       (estado.ignoradas ? ` · ${plural(estado.ignoradas, 'linha sem telefone ignorada', 'linhas sem telefone ignoradas')}` : '')
-    : 'Nenhuma planilha importada.';
+    : MODO_GOOGLE ? 'Planilha Google sem leads com telefone.' : 'Nenhuma planilha importada.';
   $('exportar').disabled = !comLista;
 
   // Números e filtro
@@ -384,7 +450,7 @@ function render() {
   const posicao = contato ? indices.indexOf(estado.atual) : -1;
   $('posicao').textContent = !comLista ? '' : !contato ? 'Pronto para começar'
     : posicao >= 0 ? `Lead ${posicao + 1} de ${indices.length}` : 'Lead atual (fora da etapa selecionada)';
-  $('nome').textContent = !comLista ? 'Importe a planilha para começar'
+  $('nome').textContent = !comLista ? (MODO_GOOGLE ? 'Nenhum lead na planilha' : 'Importe a planilha para começar')
     : contato ? (contato.nome || 'Lead sem nome') : `${naFila.length} leads na fila`;
   mostrar('frase', Boolean(contato));
   mostrar('blocoTelefone', Boolean(contato));
@@ -446,7 +512,11 @@ function renderConfig() {
   $('cadeado').classList.toggle('aberto', liberada);
   $('cadeado').setAttribute('aria-label', liberada ? 'desbloqueado' : 'bloqueado');
   $('abrirConfig').setAttribute('aria-expanded', String(aberta));
-  $('infoToken').textContent = EH_EXTENSAO
+  $('infoToken').textContent = MODO_GOOGLE
+    ? (tela.tokenNoServidor
+      ? 'O token da Api4Com está salvo na sua conta Google. Para trocar, cole o novo e clique em Salvar.'
+      : 'Nenhum token salvo. Cole o token da Api4Com e clique em Salvar (fica salvo na sua conta Google).')
+    : EH_EXTENSAO
     ? 'Na extensão, preencha o token da Api4Com (ou gere com e-mail e senha) para ligar sozinha.'
     : tela.tokenNoServidor
       ? 'O token da Api4Com já está guardado no servidor: não precisa preencher.'
@@ -496,6 +566,20 @@ function preencherFormulario(c) {
 
 async function salvarConfig() {
   if (!tela.configLiberada) return;
+  if (MODO_GOOGLE) {
+    // Ramal e token ficam na conta Google (valem no celular e no PC); o token não volta para a tela
+    try {
+      const r = await servidor('salvarConfig', lerFormulario());
+      estado.config.ramal = r.ramal;
+      tela.tokenNoServidor = r.tokenSalvo;
+      $('token').value = '';
+      $('statusConfig').textContent = 'Configurações salvas na sua conta Google.';
+    } catch (erro) {
+      $('statusConfig').textContent = 'Não consegui salvar: ' + (erro.message || erro);
+    }
+    renderConfig();
+    return;
+  }
   estado.config = lerFormulario();
   await armazenamento.set({ config: estado.config });
   $('statusConfig').textContent = 'Configurações salvas.';
@@ -507,6 +591,18 @@ async function gerarToken() {
   const senha = $('senha').value;
   if (!email || !senha) { $('statusConfig').textContent = 'Preencha o e-mail e a senha.'; return; }
   $('statusConfig').textContent = 'Gerando token…';
+  if (MODO_GOOGLE) {
+    const r = await servidor('gerarToken', email, senha).catch((e) => ({ erro: e.message || String(e) }));
+    $('senha').value = '';
+    if (r.erro) {
+      $('statusConfig').textContent = `Não consegui gerar o token (${r.erro}). Confira e-mail e senha, ou cole o token.`;
+    } else {
+      tela.tokenNoServidor = true;
+      $('statusConfig').textContent = 'Token gerado e salvo na sua conta Google.';
+      renderConfig();
+    }
+    return;
+  }
   try {
     const resposta = await fetch(URL_LOGIN, {
       method: 'POST',
@@ -529,7 +625,7 @@ async function gerarToken() {
 
 async function iniciar() {
   const chaves = ['arquivo', 'cabecalho', 'colRegistro', 'contatos', 'atual', 'filtroEtapa', 'ignoradas', 'config'];
-  const salvo = await armazenamento.get(chaves);
+  const salvo = await armazenamento.get(chaves).catch(() => ({}));
   // Listas salvas pela versão anterior não tinham estes campos
   const contatos = (salvo.contatos || []).map((c) => ({
     linha: [c.nome, c.telefone, c.etapa, c.campanha], ligadoEm: null, ligadoEmTexto: '', resultado: '', anotacao: '', ...c,
@@ -548,11 +644,18 @@ async function iniciar() {
     },
   });
   preencherFormulario(estado.config);
+  if (MODO_GOOGLE) {
+    // A planilha Google é a fonte dos leads: sem importar, exportar nem modelo
+    for (const id of ['baixarModelo', 'rotuloImportar', 'exportar', 'btnExportarFim']) mostrar(id, false);
+    mostrar('btnAtualizar', true);
+    $('textoFim').textContent = 'Todos os leads selecionados já foram trabalhados. Os registros estão na planilha.';
+    $('token').placeholder = 'cole o token novo (vazio = manter o salvo)';
+  }
   render();
   renderConfig();
 
-  // No site, pergunta ao servidor se o token padrão está configurado
-  if (!EH_EXTENSAO) {
+  if (!MODO_GOOGLE && !EH_EXTENSAO) {
+    // No site, pergunta ao servidor se o token padrão está configurado
     try {
       const r = await fetch('/api/status', { cache: 'no-store' });
       tela.tokenNoServidor = Boolean((await r.json()).tokenNoServidor);
@@ -584,6 +687,11 @@ async function iniciar() {
   $('gerarToken').addEventListener('click', gerarToken);
   $('ramal').addEventListener('change', salvarConfig);
   $('token').addEventListener('change', salvarConfig);
+
+  if (MODO_GOOGLE) {
+    $('btnAtualizar').addEventListener('click', carregarPlanilhaGoogle);
+    await carregarPlanilhaGoogle();
+  }
 }
 
 iniciar();

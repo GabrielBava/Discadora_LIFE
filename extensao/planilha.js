@@ -218,6 +218,10 @@ const Planilha = (() => {
 
   function excelParaData(valor) {
     const texto = String(valor).trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(texto)) {
+      const d = new Date(texto); // ISO (vem da planilha Google)
+      return isNaN(d) ? null : d;
+    }
     if (/^\d+(\.\d+)?$/.test(texto) && Number(texto) > 20000) {
       const u = new Date(Math.round((Number(texto) - 25569) * 86400) * 1000);
       return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes(), u.getUTCSeconds());

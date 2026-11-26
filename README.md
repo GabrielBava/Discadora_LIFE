@@ -1,9 +1,10 @@
 # Discadora LIFE
 
-Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **Api4Com**. Funciona de dois jeitos, com as mesmas telas:
+Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **Api4Com**. Funciona de três jeitos, com as mesmas telas:
 
-- **Site (Vercel):** é só abrir o link no navegador. Nada para instalar.
-- **Extensão do Chrome/Edge:** abre como painel na lateral do navegador.
+- **Planilha Google (recomendado):** a Discadora abre por um link do Google, no celular ou no PC, lê os leads direto da planilha e grava os registros nas colunas ao lado. Ramal e token ficam salvos na sua conta Google.
+- **Site (Vercel):** abre pelo link do site; você importa a planilha (.xlsx/.csv) e exporta com os registros.
+- **Extensão do Chrome/Edge:** igual ao site, mas como painel na lateral do navegador.
 
 **O que ela faz:**
 
@@ -19,6 +20,35 @@ Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **
 > **Por que pela API e não colando o número na tela do Webphone?** O Webphone da Api4Com é uma extensão do Chrome, e o Chrome não permite que uma extensão mexa na tela de outra. A API da Api4Com faz o mesmo papel: a chamada sai do seu ramal e aparece no seu Webphone.
 
 ---
+
+## Planilha Google (recomendado)
+
+Configuração única, uns 5 minutos:
+
+1. **Converta a planilha.** Abra o arquivo no Google Drive. Se ele for um Excel (`.xlsx`), clique em **Arquivo → Salvar como Planilhas Google** e use a planilha nova daqui para frente. Os leads ficam na **primeira aba**, com os títulos na **linha 1** (Nome, Telefone, Etapa, Campanha; outros títulos de CRM também funcionam).
+2. Na planilha: **Extensões → Apps Script**.
+3. No arquivo `Código.gs`, apague tudo e cole o conteúdo de [`apps-script/Codigo.gs`](apps-script/Codigo.gs).
+4. Clique no **+** ao lado de "Arquivos" → **HTML**, dê o nome `Discadora` (exatamente assim), apague tudo e cole o conteúdo de [`apps-script/Discadora.html`](apps-script/Discadora.html).
+5. Salve (ícone de disquete).
+6. **Implantar → Nova implantação →** engrenagem **→ App da Web**:
+   - Executar como: **Eu**
+   - Quem pode acessar: **Somente eu**
+   - **Implantar**
+7. Autorize: escolha sua conta. Se aparecer "O Google não verificou este app", clique em **Avançado → Acessar (não seguro)** e depois em **Permitir**. É o seu próprio script, por isso o aviso.
+8. Copie o **URL do app da Web** (termina em `/exec`). Abra no celular e no PC, logado na mesma conta Google. No celular, use **Adicionar à tela inicial**.
+9. Na Discadora: **Configurações** → senha → cole o **token da Api4Com** → **Salvar**. O ramal já vem como `1204`. Ramal e token ficam salvos na sua conta Google e valem no celular e no PC. O token não aparece na planilha nem no código.
+
+**No dia a dia:**
+
+- Deixe o **Webphone da Api4Com aberto e Online no PC**: a ligação sai pelo ramal 1204, que toca nesse Webphone. Você pode disparar as ligações pelo celular.
+- Lead novo: cole na planilha e clique em **Atualizar planilha** na Discadora.
+- Na primeira ligação, a Discadora cria logo depois da última coluna: **Data/hora da ligação**, **Resultado** e **Anotação**. Se essas colunas já existirem, ela usa as que existem.
+- Se a planilha mudar de ordem enquanto você liga, a Discadora encontra o lead pelo telefone antes de gravar.
+- Fechou e abriu de novo (até em outro aparelho)? Ela continua no lead que estava em ligação, porque o andamento está na própria planilha.
+
+**Quando a Discadora for atualizada:** cole de novo os dois arquivos (passos 3 e 4), salve e vá em **Implantar → Gerenciar implantações →** lápis **→ Versão: Nova versão → Implantar**. O link continua o mesmo.
+
+**Problema comum:** "Não foi possível abrir o arquivo" aparece quando o navegador tem várias contas Google logadas. Abra o link numa janela anônima (ou num perfil) só com a conta dona da planilha.
 
 ## Publicar como site na Vercel
 
@@ -101,6 +131,10 @@ A planilha, os registros das ligações, o ramal e o token ficam salvos **só ne
 ## Arquivos
 
 ```
+apps-script/
+  Codigo.gs            versão Planilha Google: lê/grava a planilha e liga pela Api4Com
+  Discadora.html       a tela para o Apps Script (GERADO: node ferramentas/gerar-apps-script.js)
+ferramentas/           gerador do Discadora.html a partir de extensao/
 vercel.json            configuração do site na Vercel (sem build)
 api/                   funções da Vercel: repassam login e ligação para a Api4Com e informam se há token no servidor
 extensao/

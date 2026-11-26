@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<!-- ARQUIVO GERADO por ferramentas/gerar-apps-script.js. Não edite: edite extensao/ e gere de novo. -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Discadora LIFE</title>
+  <style>
+/* Discadora LIFE — identidade visual Grupo Life Brasil */
+
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap");
+
+:root {
+  --laranja: #ff5b14;
+  --laranja-claro: #ff8a3d;
+  --gradiente: linear-gradient(90deg, #ff4d00 0%, #ff7a1a 100%);
+  --preto: #141414;
+  --preto-2: #1f1f1f;
+  --texto: #161616;
+  --cinza: #6b6b6b;
+  --borda: #ececec;
+  --verde: #22c55e;
+  --amarelo: #f5b400;
+  --vermelho: #ef4444;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 18px 16px 28px;
+  font: 14px/1.45 "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: #fff;
+}
+
+/* ---------- Cabeçalho ---------- */
+.topo { margin-bottom: 16px; }
+.marca {
+  display: inline-flex;
+  align-items: flex-start;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.marca strong { font-weight: 800; }
+.coracao { width: 22px; height: 20px; margin: -8px 0 0 2px; }
+.selo {
+  display: table;
+  margin-top: 10px;
+  padding: 6px 16px;
+  border: 2px solid var(--laranja);
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* ---------- Textos utilitários ---------- */
+.info { color: var(--cinza); font-size: 12px; margin: 8px 0 0; }
+.sobretitulo {
+  display: block;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--laranja-claro);
+}
+.sobretitulo.escuro { color: var(--laranja); }
+
+/* ---------- Botões ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  font-weight: 600; font-size: 13px; line-height: 1.2;
+  font-family: inherit;
+  color: var(--texto);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.08s, filter 0.15s, background 0.15s;
+}
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible {
+  outline: 3px solid rgba(255, 91, 20, 0.35);
+  outline-offset: 2px;
+}
+
+.btn.contorno { background: #fff; border-color: var(--laranja); }
+.btn.contorno:hover:not(:disabled) { background: #fff3ec; }
+
+.btn.principal {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--gradiente);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: 0 10px 22px rgba(255, 91, 20, 0.28);
+}
+.btn.principal:hover:not(:disabled) { filter: brightness(1.06); }
+
+.btn.escuro { width: 100%; padding: 14px 18px; background: var(--preto); color: #fff; }
+.btn.escuro:hover { background: #262626; }
+
+.seta {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+.seta svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+.duplo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.duplo .btn { flex-direction: column; gap: 2px; width: 100%; padding: 12px 10px; }
+.duplo .btn strong { font-size: 16px; font-weight: 800; }
+.duplo .btn small { font-size: 11px; font-weight: 600; opacity: 0.85; }
+
+.link {
+  display: block;
+  margin: 10px auto 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--cinza);
+  font-weight: 600; font-size: 12px;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Planilha ---------- */
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Números e filtro ---------- */
+.numeros { margin-top: 18px; }
+.filtro { display: block; }
+.filtro select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 40px 11px 14px;
+  border: 2px solid var(--borda);
+  border-radius: 14px;
+  font-weight: 700; font-size: 14px;
+  font-family: inherit;
+  color: var(--texto);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='%23ff5b14' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center / 18px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.cartoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.cartao-num {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+}
+.cartao-num .num { font-size: 26px; font-weight: 800; line-height: 1.1; color: var(--laranja); }
+.cartao-num .leg { font-size: 11px; font-weight: 600; color: var(--cinza); }
+.cartao-num.destaque { background: var(--preto); border-color: var(--laranja-claro); }
+.cartao-num.destaque .num { color: #fff; }
+.cartao-num.destaque .leg { color: var(--laranja-claro); }
+
+.progresso { height: 8px; margin-top: 12px; border-radius: 999px; background: #eeeeee; overflow: hidden; }
+.barra { width: 0; height: 100%; border-radius: 999px; background: var(--gradiente); transition: width 0.3s; }
+
+/* ---------- Cartão do lead ---------- */
+.palco { position: relative; margin: 22px 0 18px; }
+.palco::before {
+  content: "";
+  position: absolute;
+  inset: 36px -8px -12px 56px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #ff7a1a, #ff4d00);
+}
+.lead {
+  position: relative;
+  padding: 20px;
+  border-radius: 26px;
+  background: linear-gradient(160deg, #1d1d1d 0%, var(--preto) 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+.nome { margin: 6px 0 0; font-size: 24px; font-weight: 800; line-height: 1.2; word-break: break-word; }
+.frase { margin: 6px 0 0; font-size: 16px; color: #e6e6e6; }
+.frase strong { color: var(--laranja-claro); font-weight: 800; }
+
+.bloco-tel {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 138, 61, 0.6);
+  border-radius: 16px;
+  background: rgba(255, 91, 20, 0.08);
+}
+.telefone { display: block; margin-top: 2px; font-size: 28px; font-weight: 800; letter-spacing: 0.01em; }
+
+.linha-campanha { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.rotulo { font-size: 12px; color: #a3a3a3; }
+.chip { padding: 4px 12px; border-radius: 999px; background: #2b2b2b; font-size: 13px; font-weight: 600; }
+
+.status { display: flex; gap: 8px; margin: 16px 0 0; font-size: 13px; color: #d4d4d4; }
+.status::before { content: ""; flex: none; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #8a8a8a; }
+.status.ok::before { background: var(--verde); }
+.status.atendeu::before { background: var(--verde); }
+.status.aviso::before { background: var(--amarelo); }
+.status.erro { color: #fecaca; }
+.status.erro::before { background: var(--vermelho); }
+
+/* ---------- Controles ---------- */
+.controles { display: grid; gap: 10px; }
+.caixa-anotacao { display: grid; gap: 10px; }
+.caixa-anotacao textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--borda);
+  border-radius: 16px;
+  font-size: 14px; line-height: 1.45;
+  font-family: inherit;
+  resize: vertical;
+}
+.caixa-anotacao textarea:focus { border-color: var(--laranja); outline: none; }
+
+.caixa-fim {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid var(--laranja);
+  border-radius: 20px;
+  background: #fff3ec;
+}
+.caixa-fim strong { font-size: 18px; font-weight: 800; }
+.caixa-fim span { font-size: 13px; color: #4a4a4a; }
+
+/* ---------- Configurações ---------- */
+.configuracoes { margin-top: 22px; padding: 4px 16px; border: 1px solid var(--borda); border-radius: 18px; }
+.cabecalho-config {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+  cursor: pointer;
+}
+.cadeado { width: 18px; height: 18px; fill: none; stroke: var(--laranja); stroke-width: 2; stroke-linecap: round; }
+.cadeado.aberto path { d: path("M8 11V8a4 4 0 0 1 7.6-1.8"); }
+.form-senha { padding-bottom: 12px; }
+.form-senha .btn { width: 100%; }
+#conteudoConfig { padding-bottom: 12px; }
+.configuracoes label { display: block; margin: 12px 0; font-size: 13px; }
+.configuracoes input[type=text], .configuracoes input[type=password] {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px 12px;
+  border: 2px solid var(--borda);
+  border-radius: 12px;
+  font: inherit;
+}
+.configuracoes input:focus { border-color: var(--laranja); outline: none; }
+details.login { margin: 12px 0; padding: 8px 12px; border: 1px dashed var(--borda); border-radius: 14px; }
+details.login > summary { cursor: pointer; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="topo">
+    <div class="marca" aria-label="Grupo Life Brasil">
+      Grupo<strong>Life</strong>Brasil
+      <svg class="coracao" viewBox="0 0 32 28" aria-hidden="true">
+        <defs>
+          <linearGradient id="gradCoracao" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FF3B3B"/>
+            <stop offset="1" stop-color="#FF8A1F"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#gradCoracao)" d="M16 28 3.2 15.6C-.9 11.6-1 5.2 3 1.6 6.4-1.4 11.6-.4 14 3.2L16 6.2l2-3c2.4-3.6 7.6-4.6 11-1.6 4 3.6 3.9 10 .1 14Z"/>
+      </svg>
+    </div>
+    <span class="selo">Discadora LIFE</span>
+  </header>
+
+  <section class="planilha">
+    <div class="acoes">
+      <a id="baixarModelo" class="btn contorno" href="modelo/modelo_discadora.xlsx" download="modelo_discadora.xlsx">Baixar modelo</a>
+      <label id="rotuloImportar" class="btn contorno">
+        Importar planilha
+        <input id="arquivo" type="file" accept=".xlsx,.csv" hidden>
+      </label>
+      <button id="exportar" class="btn contorno" type="button" disabled>Exportar planilha</button>
+      <button id="btnAtualizar" class="btn contorno" type="button" hidden>Atualizar planilha</button>
+    </div>
+    <p id="infoLista" class="info">Nenhuma planilha importada.</p>
+  </section>
+
+  <section id="numeros" class="numeros" hidden>
+    <label class="filtro">
+      <span class="sobretitulo escuro">Etapa</span>
+      <select id="filtroEtapa"></select>
+    </label>
+    <div class="cartoes">
+      <div class="cartao-num"><span id="numTotal" class="num">0</span><span class="leg">Total de leads</span></div>
+      <div class="cartao-num"><span id="numEtapa" class="num">0</span><span id="legEtapa" class="leg">Nesta etapa</span></div>
+      <div class="cartao-num destaque"><span id="numFaltam" class="num">0</span><span class="leg">Faltam ligar</span></div>
+    </div>
+    <div class="progresso" aria-hidden="true"><div id="barra" class="barra"></div></div>
+    <p id="resumo" class="info"></p>
+  </section>
+
+  <section class="palco">
+    <article class="lead">
+      <p id="posicao" class="sobretitulo"></p>
+      <h2 id="nome" class="nome">Importe a planilha para começar</h2>
+      <p id="frase" class="frase" hidden>Hoje a etapa é <strong id="etapa"></strong></p>
+      <div id="blocoTelefone" class="bloco-tel" hidden>
+        <span class="sobretitulo">Telefone</span>
+        <span id="telefone" class="telefone"></span>
+      </div>
+      <p id="linhaCampanha" class="linha-campanha" hidden>
+        <span class="rotulo">Campanha</span>
+        <span id="campanha" class="chip"></span>
+      </p>
+      <p id="status" class="status" hidden></p>
+    </article>
+  </section>
+
+  <section class="controles">
+    <button id="btnIniciar" class="btn principal" type="button" hidden>
+      <span id="txtIniciar">Ligar para o próximo</span>
+      <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
+    </button>
+
+    <div id="caixaResultado" class="duplo" hidden>
+      <button id="btnNaoAtendeu" class="btn principal" type="button">
+        <strong>Não atendeu</strong><small>ir para o próximo</small>
+      </button>
+      <button id="btnAtendeu" class="btn escuro" type="button">
+        <strong>Atendeu</strong><small>registrar conversa</small>
+      </button>
+    </div>
+
+    <div id="caixaAnotacao" class="caixa-anotacao" hidden>
+      <label for="anotacao" class="sobretitulo escuro">O que foi falado?</label>
+      <textarea id="anotacao" rows="4" placeholder="Ex.: tem interesse, pediu retorno na sexta às 10h."></textarea>
+      <button id="btnSalvarProximo" class="btn principal" type="button">
+        <span>Salvar e ligar para o próximo</span>
+        <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
+      </button>
+      <div class="duplo">
+        <button id="btnSoSalvar" class="btn contorno" type="button">Só salvar</button>
+        <button id="btnCancelarAnotacao" class="btn contorno" type="button">Voltar</button>
+      </div>
+    </div>
+
+    <div id="caixaErro" class="duplo" hidden>
+      <button id="btnDiscarDeNovo" class="btn principal" type="button"><strong>Discar de novo</strong><small>mesmo lead</small></button>
+      <button id="btnPular" class="btn contorno" type="button"><strong>Pular lead</strong><small>ir para o próximo</small></button>
+    </div>
+
+    <button id="lnkDiscarDeNovo" class="link" type="button" hidden>Discar este lead de novo</button>
+
+    <div id="caixaFim" class="caixa-fim" hidden>
+      <strong>Etapa concluída!</strong>
+      <span id="textoFim">Todos os leads selecionados já foram trabalhados. Exporte a planilha para guardar os registros.</span>
+      <button id="btnExportarFim" class="btn principal" type="button">Exportar planilha</button>
+    </div>
+  </section>
+
+  <section id="configuracoes" class="configuracoes">
+    <button id="abrirConfig" class="cabecalho-config" type="button" aria-expanded="false">
+      <span>Configurações</span>
+      <svg id="cadeado" class="cadeado" viewBox="0 0 24 24" aria-label="bloqueado"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    </button>
+
+    <form id="formSenha" class="form-senha" hidden>
+      <label>Digite a senha para abrir as configurações
+        <input id="senhaConfig" type="password" inputmode="numeric" autocomplete="off">
+      </label>
+      <button class="btn contorno" type="submit">Desbloquear</button>
+      <p id="erroSenha" class="info"></p>
+    </form>
+
+    <div id="conteudoConfig" hidden>
+      <p id="infoToken" class="info"></p>
+
+      <label>Seu ramal na Api4Com (aparece no topo do Webphone, ao lado de "Usuário")
+        <input id="ramal" type="text" inputmode="numeric" placeholder="ex.: 1001">
+      </label>
+      <label>Token da API da Api4Com (opcional no site)
+        <input id="token" type="password" autocomplete="off" placeholder="vazio = usar o token do servidor">
+      </label>
+
+      <details class="login">
+        <summary>Gerar o token com o e-mail e a senha da Api4Com</summary>
+        <label>E-mail <input id="email" type="text" autocomplete="off"></label>
+        <label>Senha <input id="senha" type="password" autocomplete="off"></label>
+        <button id="gerarToken" class="btn contorno" type="button">Gerar token</button>
+        <p class="info">A senha é enviada só para a Api4Com e não fica salva.</p>
+      </details>
+
+      <div class="duplo">
+        <button id="salvar" class="btn contorno" type="button">Salvar</button>
+        <button id="trancarConfig" class="btn contorno" type="button">Trancar</button>
+      </div>
+      <p id="statusConfig" class="info"></p>
+    </div>
+  </section>
+
+  <script>
+// Leitura de planilhas .xlsx e .csv sem bibliotecas externas.
+// Devolve sempre uma matriz de linhas: [["Nome", "Telefone", ...], [...], ...]
+
+const Planilha = (() => {
+  async function lerArquivo(arquivo) {
+    const nome = arquivo.name.toLowerCase();
+    const buffer = await arquivo.arrayBuffer();
+    if (nome.endsWith('.xlsx')) return lerXlsx(buffer);
+    if (nome.endsWith('.csv') || nome.endsWith('.txt')) return lerCsv(decodificarTexto(buffer));
+    throw new Error('Formato não suportado. Salve a planilha como .xlsx ou .csv.');
+  }
+
+  // ---------- CSV ----------
+
+  // Exportações do Excel em português costumam vir em Windows-1252, não UTF-8.
+  function decodificarTexto(buffer) {
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    } catch {
+      return new TextDecoder('windows-1252').decode(buffer);
+    }
+  }
+
+  function lerCsv(texto) {
+    const primeiraLinha = texto.split(/\r?\n/, 1)[0] || '';
+    const contar = (c) => primeiraLinha.split(c).length - 1;
+    const separador = [';', ',', '\t'].sort((a, b) => contar(b) - contar(a))[0];
+
+    const linhas = [];
+    let linha = [];
+    let campo = '';
+    let entreAspas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      if (entreAspas) {
+        if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+        else if (c === '"') entreAspas = false;
+        else campo += c;
+      } else if (c === '"') {
+        entreAspas = true;
+      } else if (c === separador) {
+        linha.push(campo); campo = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && texto[i + 1] === '\n') i++;
+        linha.push(campo); linhas.push(linha);
+        linha = []; campo = '';
+      } else {
+        campo += c;
+      }
+    }
+    if (campo !== '' || linha.length) { linha.push(campo); linhas.push(linha); }
+    return limpar(linhas);
+  }
+
+  // ---------- XLSX (arquivo zip com XML dentro) ----------
+
+  async function lerXlsx(buffer) {
+    const zip = abrirZip(buffer);
+    const xml = async (caminho) => {
+      const texto = await zip.lerTexto(caminho);
+      return texto == null ? null : new DOMParser().parseFromString(texto, 'application/xml');
+    };
+    const filhos = (no, nome) => [...no.getElementsByTagNameNS('*', nome)];
+
+    // Textos compartilhados (onde o Excel guarda a maioria dos textos)
+    const compartilhados = [];
+    const docTextos = await xml('xl/sharedStrings.xml');
+    if (docTextos) {
+      for (const si of filhos(docTextos, 'si')) compartilhados.push(textoRico(si));
+    }
+
+    // Primeira aba da pasta de trabalho
+    let caminhoAba = 'xl/worksheets/sheet1.xml';
+    const docPasta = await xml('xl/workbook.xml');
+    const docRels = await xml('xl/_rels/workbook.xml.rels');
+    const primeira = docPasta && filhos(docPasta, 'sheet')[0];
+    if (primeira && docRels) {
+      const idRel = [...primeira.attributes].find((a) => a.localName === 'id')?.value;
+      const rel = filhos(docRels, 'Relationship').find((r) => r.getAttribute('Id') === idRel);
+      const alvo = rel?.getAttribute('Target');
+      if (alvo) caminhoAba = alvo.startsWith('/') ? alvo.slice(1) : 'xl/' + alvo.replace(/^\.\//, '');
+    }
+    const docAba = await xml(caminhoAba);
+    if (!docAba) throw new Error('Não encontrei a primeira aba da planilha.');
+
+    const linhas = [];
+    let proximaLinha = 0;
+    for (const row of filhos(docAba, 'row')) {
+      const r = parseInt(row.getAttribute('r'), 10);
+      const indiceLinha = Number.isFinite(r) ? r - 1 : proximaLinha;
+      proximaLinha = indiceLinha + 1;
+      const valores = [];
+      let proximaColuna = 0;
+      for (const c of filhos(row, 'c')) {
+        const ref = c.getAttribute('r');
+        const col = ref ? indiceColuna(ref) : proximaColuna;
+        proximaColuna = col + 1;
+        valores[col] = valorCelula(c, compartilhados, filhos);
+      }
+      linhas[indiceLinha] = Array.from(valores, (v) => v ?? '');
+    }
+    return limpar(Array.from(linhas, (l) => l ?? []));
+  }
+
+  function valorCelula(c, compartilhados, filhos) {
+    const tipo = c.getAttribute('t');
+    const v = filhos(c, 'v')[0]?.textContent ?? '';
+    if (tipo === 's') return compartilhados[parseInt(v, 10)] ?? '';
+    if (tipo === 'inlineStr') return filhos(c, 'is')[0] ? textoRico(filhos(c, 'is')[0]) : '';
+    if (tipo === 'b') return v === '1' ? 'VERDADEIRO' : 'FALSO';
+    if ((tipo === null || tipo === 'n') && /e/i.test(v) && Number.isFinite(Number(v))) {
+      const n = Number(v); // telefone salvo como número em notação científica
+      return Number.isInteger(n) ? n.toFixed(0) : String(n);
+    }
+    return v;
+  }
+
+  // Junta os trechos <t> de um texto, ignorando a guia fonética (<rPh>)
+  function textoRico(no) {
+    return [...no.getElementsByTagNameNS('*', 't')]
+      .filter((t) => t.parentNode.localName !== 'rPh')
+      .map((t) => t.textContent)
+      .join('');
+  }
+
+  function indiceColuna(ref) {
+    const letras = ref.match(/^[A-Z]+/i)?.[0].toUpperCase() || 'A';
+    let n = 0;
+    for (const l of letras) n = n * 26 + (l.charCodeAt(0) - 64);
+    return n - 1;
+  }
+
+  function abrirZip(buffer) {
+    const dv = new DataView(buffer);
+    let fim = -1;
+    for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 65557); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { fim = i; break; }
+    }
+    if (fim < 0) throw new Error('Arquivo .xlsx inválido ou corrompido.');
+
+    const entradas = {};
+    const total = dv.getUint16(fim + 10, true);
+    let p = dv.getUint32(fim + 16, true);
+    for (let n = 0; n < total; n++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('Arquivo .xlsx inválido ou corrompido.');
+      const tamNome = dv.getUint16(p + 28, true);
+      const nome = new TextDecoder().decode(new Uint8Array(buffer, p + 46, tamNome));
+      entradas[nome.toLowerCase()] = {
+        metodo: dv.getUint16(p + 10, true),
+        tamanho: dv.getUint32(p + 20, true),
+        inicio: dv.getUint32(p + 42, true),
+      };
+      p += 46 + tamNome + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+    }
+
+    return {
+      async lerTexto(caminho) {
+        const e = entradas[caminho.toLowerCase()];
+        if (!e) return null;
+        const dados = e.inicio + 30 + dv.getUint16(e.inicio + 26, true) + dv.getUint16(e.inicio + 28, true);
+        const bytes = new Uint8Array(buffer, dados, e.tamanho);
+        if (e.metodo === 0) return new TextDecoder().decode(bytes);
+        if (e.metodo !== 8) throw new Error('Compressão do .xlsx não suportada.');
+        const fluxo = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        return new Response(fluxo).text();
+      },
+    };
+  }
+
+  // Tira espaços das pontas e remove linhas totalmente vazias
+  function limpar(linhas) {
+    return linhas
+      .map((l) => l.map((v) => String(v ?? '').trim()))
+      .filter((l) => l.some((v) => v !== ''));
+  }
+
+  // ---------- Gerar .xlsx ----------
+  // linhas: matriz de células. Texto vira texto; Date vira data/hora do Excel.
+  // A primeira linha sai em negrito e fica congelada (cabeçalho).
+
+  function escreverXlsx(linhas, nomeAba = 'Contatos') {
+    const esc = (t) => String(t)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const letra = (i) => { let s = ''; for (i++; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + ((i - 1) % 26)) + s; return s; };
+    const largura = Math.max(1, ...linhas.map((l) => l.length));
+
+    const xmlLinhas = linhas.map((linha, r) => {
+      const celulas = linha.map((v, c) => {
+        const ref = letra(c) + (r + 1);
+        if (v instanceof Date) return `<c r="${ref}" s="1"><v>${dataParaExcel(v)}</v></c>`;
+        if (v === null || v === undefined || v === '') return '';
+        return `<c r="${ref}" t="inlineStr"${r === 0 ? ' s="2"' : ''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+      }).join('');
+      return `<row r="${r + 1}">${celulas}</row>`;
+    }).join('');
+
+    const ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+    const nsR = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+    const arquivos = {
+      '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+      '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+      'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook ${ns} ${nsR}><sheets><sheet name="${esc(nomeAba)}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      'xl/_rels/workbook.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+      'xl/styles.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet ${ns}><numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy hh:mm"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+      'xl/worksheets/sheet1.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet ${ns}><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="${largura}" width="24" customWidth="1"/></cols><sheetData>${xmlLinhas}</sheetData></worksheet>`,
+    };
+    return new Blob([zipSemCompressao(arquivos)], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+  }
+
+  // Data/hora local <-> número de série do Excel (dias desde 30/12/1899)
+  function dataParaExcel(d) {
+    const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+    return (utc / 86400000 + 25569).toFixed(6);
+  }
+
+  function excelParaData(valor) {
+    const texto = String(valor).trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(texto)) {
+      const d = new Date(texto); // ISO (vem da planilha Google)
+      return isNaN(d) ? null : d;
+    }
+    if (/^\d+(\.\d+)?$/.test(texto) && Number(texto) > 20000) {
+      const u = new Date(Math.round((Number(texto) - 25569) * 86400) * 1000);
+      return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes(), u.getUTCSeconds());
+    }
+    const m = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    return null;
+  }
+
+  function zipSemCompressao(arquivos) {
+    const tabela = crc32Tabela();
+    const partes = [];
+    const central = [];
+    let posicao = 0;
+    for (const [nome, conteudo] of Object.entries(arquivos)) {
+      const dados = new TextEncoder().encode(conteudo);
+      const bNome = new TextEncoder().encode(nome);
+      let crc = 0xffffffff;
+      for (const b of dados) crc = tabela[(crc ^ b) & 0xff] ^ (crc >>> 8);
+      crc = (crc ^ 0xffffffff) >>> 0;
+
+      const local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);
+      local.setUint16(4, 20, true);
+      local.setUint16(12, 0x5821, true); // data fixa (01/01/2024)
+      local.setUint32(14, crc, true);
+      local.setUint32(18, dados.length, true);
+      local.setUint32(22, dados.length, true);
+      local.setUint16(26, bNome.length, true);
+      partes.push(new Uint8Array(local.buffer), bNome, dados);
+
+      const cd = new DataView(new ArrayBuffer(46));
+      cd.setUint32(0, 0x02014b50, true);
+      cd.setUint16(4, 20, true);
+      cd.setUint16(6, 20, true);
+      cd.setUint16(14, 0x5821, true);
+      cd.setUint32(16, crc, true);
+      cd.setUint32(20, dados.length, true);
+      cd.setUint32(24, dados.length, true);
+      cd.setUint16(28, bNome.length, true);
+      cd.setUint32(42, posicao, true);
+      central.push(new Uint8Array(cd.buffer), bNome);
+      posicao += 30 + bNome.length + dados.length;
+    }
+    const tamanhoCentral = central.reduce((t, p) => t + p.length, 0);
+    const fim = new DataView(new ArrayBuffer(22));
+    fim.setUint32(0, 0x06054b50, true);
+    fim.setUint16(8, Object.keys(arquivos).length, true);
+    fim.setUint16(10, Object.keys(arquivos).length, true);
+    fim.setUint32(12, tamanhoCentral, true);
+    fim.setUint32(16, posicao, true);
+    return new Blob([...partes, ...central, new Uint8Array(fim.buffer)]);
+  }
+
+  function crc32Tabela() {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      t[n] = c >>> 0;
+    }
+    return t;
+  }
+
+  return { lerArquivo, lerCsv, lerXlsx, escreverXlsx, excelParaData };
+})();
+  </script>
+  <script>
+// Painel da Discadora LIFE.
+// Fluxo: importar planilha -> (opcional) filtrar por etapa -> ligar para o próximo lead.
+// Depois de cada ligação o usuário registra "Não atendeu" (já liga para o próximo) ou
+// "Atendeu" (anota o que foi falado). A Discadora nunca desliga: quem desliga é o
+// usuário no Webphone (ou a Api4Com, ex.: caixa postal). Só liga para o próximo quando
+// o usuário clica. Data/hora, resultado e anotação vão para a planilha exportada.
+
+// O mesmo painel roda de três jeitos:
+// - Planilhas Google (Apps Script): lê os leads da planilha, grava os registros nas
+//   colunas ao lado e liga pelo servidor do Google (google.script.run).
+// - Site (Vercel): importa .xlsx/.csv; as ligações passam pelas funções /api/*,
+//   porque o navegador bloqueia chamadas diretas para a API da Api4Com (CORS).
+// - Extensão do Chrome: importa .xlsx/.csv e chama a Api4Com direto.
+const MODO_GOOGLE = Boolean(globalThis.google?.script?.run);
+const EH_EXTENSAO = !MODO_GOOGLE && Boolean(globalThis.chrome?.runtime?.id);
+const API4COM = 'https://api.api4com.com/api/v1';
+const URL_DISCAR = EH_EXTENSAO ? `${API4COM}/dialer` : '/api/discar';
+const URL_LOGIN = EH_EXTENSAO ? `${API4COM}/users/login` : '/api/login';
+
+// Chama uma função do Codigo.gs (só no modo Planilhas Google)
+function servidor(funcao, ...args) {
+  return new Promise((ok, falha) => {
+    google.script.run.withSuccessHandler(ok).withFailureHandler(falha)[funcao](...args);
+  });
+}
+
+// Onde a lista, a posição e a configuração ficam salvas (só neste navegador)
+const armazenamento = EH_EXTENSAO ? chrome.storage.local : {
+  async get(chaves) {
+    const r = {};
+    for (const k of chaves) {
+      const v = localStorage.getItem('discadora:' + k);
+      if (v !== null) r[k] = JSON.parse(v);
+    }
+    return r;
+  },
+  async set(valores) {
+    for (const [k, v] of Object.entries(valores)) localStorage.setItem('discadora:' + k, JSON.stringify(v));
+  },
+};
+
+// Ramal padrão. O token padrão NÃO fica aqui: no site ele está na variável de
+// ambiente API4COM_TOKEN da Vercel e é usado pela função /api/discar.
+const CONFIG_PADRAO = { ramal: '1204', token: '' };
+// Senha que libera as Configurações (guardada só como SHA-256)
+const HASH_SENHA_CONFIG = 'e68adee72e4d3c421f15cc33523be1c38208e4489b91d5e426503d99c5a7d790';
+const SEM_ETAPA = '(sem etapa)';
+const TITULOS_REGISTRO = { ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação' };
+
+// Dados salvos
+const estado = {
+  arquivo: '',
+  cabecalho: null,           // títulos originais da planilha (ou null se ela não tinha)
+  colRegistro: {},           // em que coluna da planilha original estavam os registros
+  contatos: [],              // um por linha da planilha (inclusive linhas sem telefone)
+  atual: -1,                 // índice do lead em atendimento
+  filtroEtapa: '',           // '' = todas as etapas
+  ignoradas: 0,
+  config: { ...CONFIG_PADRAO },
+};
+// Estado só da tela
+const tela = { discando: false, anotando: false, mensagem: null, tokenNoServidor: false, configLiberada: false };
+
+const $ = (id) => document.getElementById(id);
+
+// ---------- Planilha -> contatos ----------
+
+const semAcento = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+// Regras em ordem de prioridade: "Nome da campanha" vira campanha, "Status do lead"
+// vira etapa, "Telefone" ganha de "Contato", e e-mail/ID nunca viram telefone.
+const REGRAS_COLUNAS = [
+  ['campanha', /campanha|campaign/],
+  ['etapa', /etapa|status|estagio|fase|stage|funil/],
+  ['nome', /\bnome\b|\bname\b/],
+  ['telefone', /telefone|fone|celular|phone|whats|\btel\b/],
+  ['telefone', /numero|contato/, /e-?mail|\bid\b/],
+  ['nome', /lead|cliente/, /e-?mail|\bid\b/],
+];
+const POSICAO_MODELO = { nome: 0, telefone: 1, etapa: 2, campanha: 3 };
+
+function montarContatos(linhas) {
+  if (!linhas.length) throw new Error('A planilha está vazia.');
+
+  const titulos = linhas[0].map(semAcento);
+  const usadas = new Set();
+
+  // Colunas de registro (vêm de uma planilha já exportada pela Discadora)
+  const colRegistro = {};
+  for (const [chave, titulo] of Object.entries(TITULOS_REGISTRO)) {
+    const i = titulos.indexOf(semAcento(titulo));
+    if (i >= 0) { colRegistro[chave] = i; usadas.add(i); }
+  }
+
+  const colunas = {};
+  for (const [campo, re, exceto] of REGRAS_COLUNAS) {
+    if (colunas[campo] !== undefined) continue;
+    const i = titulos.findIndex((t, i) => !usadas.has(i) && re.test(t) && !exceto?.test(t));
+    if (i >= 0) { colunas[campo] = i; usadas.add(i); }
+  }
+
+  const temCabecalho = Object.keys(colunas).length > 0;
+  if (!temCabecalho) Object.assign(colunas, POSICAO_MODELO);
+  if (colunas.telefone === undefined) {
+    throw new Error('Não encontrei a coluna de telefone. Use o modelo: Nome, Telefone, Etapa, Campanha.');
+  }
+
+  const contatos = [];
+  let ignoradas = 0;
+  linhas.slice(temCabecalho ? 1 : 0).forEach((linha, posicao) => {
+    const pegar = (i) => (i === undefined ? '' : linha[i] || '');
+    const telefone = pegar(colunas.telefone);
+    // Se a célula tiver mais de um telefone, usa o primeiro
+    const numero = telefone.split(/[\/;|,]/)[0].replace(/\D/g, '');
+    if (!numero) ignoradas++;
+
+    const ligadoEmBruto = pegar(colRegistro.ligadoEm);
+    const data = ligadoEmBruto ? Planilha.excelParaData(ligadoEmBruto) : null;
+    contatos.push({
+      nome: pegar(colunas.nome),
+      telefone,
+      numero,
+      etapa: pegar(colunas.etapa),
+      campanha: pegar(colunas.campanha),
+      linha,
+      ligadoEm: data ? data.getTime() : null,
+      ligadoEmTexto: data ? '' : ligadoEmBruto,
+      resultado: pegar(colRegistro.resultado),
+      anotacao: pegar(colRegistro.anotacao),
+      posicao, // linha de dados (0 = primeira depois do cabeçalho)
+    });
+  });
+  return { cabecalho: temCabecalho ? linhas[0] : null, colRegistro, colTelefone: colunas.telefone, contatos, ignoradas };
+}
+
+// ---------- Fila de ligações ----------
+
+const etapaDe = (c) => c.etapa || SEM_ETAPA;
+const ligado = (c) => Boolean(c.ligadoEm || c.ligadoEmTexto);
+const trabalhado = (c) => Boolean(c.resultado) || ligado(c);
+const contatoAtual = () => estado.contatos[estado.atual];
+
+// Índices dos leads com telefone da etapa escolhida, na ordem da planilha
+function fila() {
+  const r = [];
+  estado.contatos.forEach((c, i) => {
+    if (c.numero && (!estado.filtroEtapa || etapaDe(c) === estado.filtroEtapa)) r.push(i);
+  });
+  return r;
+}
+
+// Próximo lead da etapa que ainda não foi trabalhado
+function proximoDaFila() {
+  return fila().find((i) => i !== estado.atual && !trabalhado(estado.contatos[i]));
+}
+
+function etapas() {
+  const contagem = new Map();
+  for (const c of estado.contatos) {
+    if (c.numero) contagem.set(etapaDe(c), (contagem.get(etapaDe(c)) || 0) + 1);
+  }
+  return contagem;
+}
+
+// ---------- Telefone ----------
+
+// Formato internacional que a Api4Com usa: (11) 99999-8888 -> +5511999998888
+function numeroInternacional(digitos) {
+  let d = digitos.replace(/^0+/, '');
+  if (d.length === 10 || d.length === 11) d = '55' + d; // só DDD + número: é do Brasil
+  return '+' + d;
+}
+
+// Para exibir: 51981494541 -> (51) 98149-4541
+function telefoneLegivel(c) {
+  let d = c.numero.replace(/^0+/, '');
+  if ((d.length === 12 || d.length === 13) && d.startsWith('55')) d = d.slice(2);
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return c.telefone;
+}
+
+const dataHora = (ms) => new Date(ms).toLocaleString('pt-BR', {
+  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+});
+const hora = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+// ---------- Ligação ----------
+
+async function discarPelaApi(numero, contato) {
+  const { token, ramal } = estado.config;
+  const resposta = await fetch(URL_DISCAR, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: token } : {}) },
+    body: JSON.stringify({
+      extension: ramal,
+      phone: numero,
+      metadata: { nome: contato.nome, etapa: contato.etapa, campanha: contato.campanha },
+    }),
+  });
+  if (resposta.status === 401) {
+    throw new Error('A Api4Com recusou o token (vencido, inválido ou não configurado). Atualize o token em Configurações ou na Vercel.');
+  }
+  if (!resposta.ok) {
+    const detalhe = (await resposta.text().catch(() => '')).slice(0, 200);
+    throw new Error(`A Api4Com recusou a ligação (HTTP ${resposta.status}). ${detalhe}`);
+  }
+}
+
+// Dispara a ligação do lead atual e registra a data/hora do disparo
+async function discarAtual() {
+  const contato = contatoAtual();
+  if (!contato || tela.discando) return;
+  const { token, ramal } = estado.config;
+  const temToken = Boolean(token) || (!EH_EXTENSAO && tela.tokenNoServidor);
+  const numero = numeroInternacional(contato.numero);
+
+  tela.discando = true;
+  tela.anotando = false;
+  tela.mensagem = { texto: `Discando ${telefoneLegivel(contato)}…` };
+  render();
+  const enviada = (ramalUsado, quando) => ({
+    texto: `Ligação enviada à Api4Com pelo ramal ${ramalUsado} às ${hora(quando)}. ` +
+      'Se o Webphone tocar, atenda. Ao terminar, registre o resultado.',
+    tipo: 'ok',
+  });
+  try {
+    if (MODO_GOOGLE) {
+      // O servidor liga e já grava a data/hora na planilha
+      const r = await servidor('discar', refPlanilha(contato), {
+        telefone: numero, nome: contato.nome, etapa: contato.etapa, campanha: contato.campanha,
+      });
+      if (r.erro) throw new Error(r.erro);
+      contato.ligadoEm = r.ligadoEm;
+      tela.mensagem = enviada(r.ramal, r.ligadoEm);
+    } else if (!temToken || !ramal) {
+      await navigator.clipboard.writeText(contato.numero);
+      tela.mensagem = {
+        texto: 'Número copiado. Cole no Webphone (Ctrl+V) e clique em Discar. ' +
+          'Para ligar sozinha, configure o ramal e o token em Configurações.',
+        tipo: 'aviso',
+      };
+      contato.ligadoEm = Date.now();
+    } else {
+      await discarPelaApi(numero, contato);
+      contato.ligadoEm = Date.now();
+      tela.mensagem = enviada(ramal, contato.ligadoEm);
+    }
+    contato.ligadoEmTexto = '';
+    await salvar();
+  } catch (erro) {
+    tela.mensagem = { texto: erro.message, tipo: 'erro' };
+  } finally {
+    tela.discando = false;
+    render();
+  }
+}
+
+// Onde o lead está na planilha Google (o servidor confere pelo telefone)
+const refPlanilha = (c) => ({ linha: c.posicao + 2, numero: c.numero, colTelefone: estado.colTelefone });
+
+// Só é chamada por clique do usuário
+async function ligarParaProximo() {
+  const proximo = proximoDaFila();
+  if (proximo === undefined) { render(); return; }
+  estado.atual = proximo;
+  tela.mensagem = null;
+  await salvar();
+  await discarAtual();
+}
+
+// Devolve false se não conseguiu gravar (aí não avança para o próximo)
+async function registrar(resultado, anotacao) {
+  const contato = contatoAtual();
+  if (!contato) return false;
+  const campos = anotacao === undefined ? { resultado } : { resultado, anotacao };
+  if (MODO_GOOGLE) {
+    $('btnSalvarProximo').disabled = $('btnSoSalvar').disabled = true;
+    try {
+      await servidor('registrar', refPlanilha(contato), campos);
+    } catch (erro) {
+      tela.mensagem = { texto: 'Não consegui gravar na planilha: ' + (erro.message || erro), tipo: 'erro' };
+      render();
+      return false;
+    } finally {
+      $('btnSalvarProximo').disabled = $('btnSoSalvar').disabled = false;
+    }
+  }
+  Object.assign(contato, campos);
+  tela.anotando = false;
+  tela.mensagem = null;
+  await salvar();
+  return true;
+}
+
+async function naoAtendeu() {
+  if (await registrar('Não atendeu')) await ligarParaProximo();
+}
+
+function abrirAnotacao() {
+  tela.anotando = true;
+  $('anotacao').value = contatoAtual()?.anotacao || '';
+  render();
+  $('anotacao').focus();
+}
+
+async function salvarAnotacao(ligarDepois) {
+  if (!(await registrar('Atendeu', $('anotacao').value.trim()))) return;
+  if (ligarDepois) await ligarParaProximo();
+  else render();
+}
+
+async function pular() {
+  if (await registrar('Pulado')) await ligarParaProximo();
+}
+
+// Modo Planilhas Google: lê os leads (e os registros já feitos) direto da planilha
+async function carregarPlanilhaGoogle() {
+  tela.mensagem = { texto: 'Lendo a planilha…' };
+  $('btnAtualizar').disabled = true;
+  render();
+  try {
+    const r = await servidor('lerPlanilha');
+    const dados = montarContatos(r.linhas);
+    if (!dados.cabecalho) throw new Error('a linha 1 precisa ter os títulos (Nome, Telefone, Etapa, Campanha).');
+    Object.assign(estado, dados, { arquivo: r.nome });
+    estado.config.ramal = r.ramal;
+    tela.tokenNoServidor = r.tokenSalvo;
+    // Lead em andamento = o último que foi ligado e ainda não tem resultado
+    estado.atual = -1;
+    let maisRecente = 0;
+    estado.contatos.forEach((c, i) => {
+      if (c.numero && c.ligadoEm && !c.resultado && c.ligadoEm >= maisRecente) { estado.atual = i; maisRecente = c.ligadoEm; }
+    });
+    tela.mensagem = null;
+  } catch (erro) {
+    tela.mensagem = { texto: 'Erro ao ler a planilha: ' + (erro.message || erro), tipo: 'erro' };
+  } finally {
+    $('btnAtualizar').disabled = false;
+    render();
+    renderConfig();
+  }
+}
+
+// ---------- Planilha: importar e exportar ----------
+
+async function importar() {
+  const arquivo = $('arquivo').files[0];
+  if (!arquivo) return;
+  try {
+    const dados = montarContatos(await Planilha.lerArquivo(arquivo));
+    if (!dados.contatos.some((c) => c.numero)) throw new Error('Nenhum contato com telefone foi encontrado na planilha.');
+    Object.assign(estado, dados, { arquivo: arquivo.name, atual: -1, filtroEtapa: '' });
+    Object.assign(tela, { anotando: false, mensagem: null });
+    await salvar();
+  } catch (erro) {
+    tela.mensagem = { texto: 'Erro ao importar: ' + erro.message, tipo: 'erro' };
+  } finally {
+    $('arquivo').value = '';
+    render();
+  }
+}
+
+function exportar() {
+  const base = estado.cabecalho ? [...estado.cabecalho] : ['Nome', 'Telefone', 'Etapa', 'Campanha'];
+  const largura = Math.max(base.length, ...estado.contatos.map((c) => c.linha.length));
+  while (base.length < largura) base.push(`Coluna ${base.length + 1}`);
+
+  const col = { ...estado.colRegistro };
+  for (const [chave, titulo] of Object.entries(TITULOS_REGISTRO)) {
+    if (col[chave] === undefined) { col[chave] = base.length; base.push(titulo); }
+  }
+
+  const linhas = [base];
+  for (const c of estado.contatos) {
+    const linha = Array.from({ length: base.length }, (_, i) => c.linha[i] ?? '');
+    linha[col.ligadoEm] = c.ligadoEm ? new Date(c.ligadoEm) : c.ligadoEmTexto;
+    linha[col.resultado] = c.resultado;
+    linha[col.anotacao] = c.anotacao;
+    linhas.push(linha);
+  }
+
+  const nome = estado.arquivo.replace(/\.(xlsx|csv|txt)$/i, '').replace(/_ligacoes$/, '') + '_ligacoes.xlsx';
+  const url = URL.createObjectURL(Planilha.escreverXlsx(linhas));
+  const a = Object.assign(document.createElement('a'), { href: url, download: nome });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+async function salvar() {
+  const { config, ...dados } = estado;
+  try {
+    if (MODO_GOOGLE) await armazenamento.set({ filtroEtapa: estado.filtroEtapa });
+    else await armazenamento.set(dados);
+  } catch {
+    tela.mensagem = {
+      texto: 'Não consegui salvar no navegador (planilha grande demais). Exporte a planilha para não perder os registros.',
+      tipo: 'erro',
+    };
+  }
+}
+
+// ---------- Tela ----------
+
+function mostrar(id, visivel) { $(id).hidden = !visivel; }
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+function render() {
+  const validos = estado.contatos.filter((c) => c.numero);
+  const comLista = validos.length > 0;
+  const contato = contatoAtual();
+  const contagem = etapas();
+  if (estado.filtroEtapa && !contagem.has(estado.filtroEtapa)) estado.filtroEtapa = '';
+  const indices = fila();
+  const naFila = indices.map((i) => estado.contatos[i]);
+  const feitos = naFila.filter(trabalhado).length;
+  const faltam = naFila.length - feitos;
+
+  // Planilha
+  $('infoLista').textContent = comLista
+    ? `${MODO_GOOGLE ? 'Planilha Google: ' : ''}${estado.arquivo} · ${validos.length} leads` +
+      (estado.ignoradas ? ` · ${plural(estado.ignoradas, 'linha sem telefone ignorada', 'linhas sem telefone ignoradas')}` : '')
+    : MODO_GOOGLE ? 'Planilha Google sem leads com telefone.' : 'Nenhuma planilha importada.';
+  $('exportar').disabled = !comLista;
+
+  // Números e filtro
+  mostrar('numeros', comLista);
+  if (comLista) {
+    const opcoes = [['', `Todas as etapas (${validos.length})`], ...[...contagem].map(([e, n]) => [e, `${e} (${n})`])];
+    $('filtroEtapa').replaceChildren(...opcoes.map(([valor, texto]) => new Option(texto, valor)));
+    $('filtroEtapa').value = estado.filtroEtapa;
+
+    $('numTotal').textContent = validos.length;
+    $('numEtapa').textContent = naFila.length;
+    $('legEtapa').textContent = estado.filtroEtapa ? 'Nesta etapa' : 'Todas as etapas';
+    $('numFaltam').textContent = faltam;
+    $('barra').style.width = naFila.length ? `${(feitos / naFila.length) * 100}%` : '0';
+    const atenderam = naFila.filter((c) => c.resultado === 'Atendeu').length;
+    const naoAtenderam = naFila.filter((c) => c.resultado === 'Não atendeu').length;
+    $('resumo').textContent = [
+      plural(feitos, 'trabalhado', 'trabalhados'),
+      plural(atenderam, 'atendeu', 'atenderam'),
+      plural(naoAtenderam, 'não atendeu', 'não atenderam'),
+    ].join(' · ');
+  }
+
+  // Cartão do lead
+  const posicao = contato ? indices.indexOf(estado.atual) : -1;
+  $('posicao').textContent = !comLista ? '' : !contato ? 'Pronto para começar'
+    : posicao >= 0 ? `Lead ${posicao + 1} de ${indices.length}` : 'Lead atual (fora da etapa selecionada)';
+  $('nome').textContent = !comLista ? (MODO_GOOGLE ? 'Nenhum lead na planilha' : 'Importe a planilha para começar')
+    : contato ? (contato.nome || 'Lead sem nome') : `${naFila.length} leads na fila`;
+  mostrar('frase', Boolean(contato));
+  mostrar('blocoTelefone', Boolean(contato));
+  mostrar('linhaCampanha', Boolean(contato?.campanha));
+  if (contato) {
+    $('etapa').textContent = etapaDe(contato);
+    $('telefone').textContent = telefoneLegivel(contato);
+    $('campanha').textContent = contato.campanha;
+  }
+
+  let status = tela.mensagem;
+  if (!status && contato) {
+    const quando = contato.ligadoEm ? ` · ligação em ${dataHora(contato.ligadoEm)}` : '';
+    if (contato.resultado === 'Atendeu') {
+      status = { texto: 'Atendeu' + quando + (contato.anotacao ? `. "${contato.anotacao}"` : ''), tipo: 'atendeu' };
+    } else if (contato.resultado) {
+      status = { texto: contato.resultado + quando, tipo: 'aviso' };
+    } else if (contato.ligadoEm) {
+      status = { texto: `Ligação disparada em ${dataHora(contato.ligadoEm)}. Ao terminar, registre o resultado.`, tipo: 'ok' };
+    } else {
+      status = { texto: 'Ligação ainda não disparada.', tipo: 'aviso' };
+    }
+  }
+  mostrar('status', Boolean(status));
+  if (status) {
+    $('status').textContent = status.texto;
+    $('status').className = 'status ' + (status.tipo || '');
+  }
+
+  // Botões: o que aparece depende de onde o lead atual está
+  const emLigacao = Boolean(contato && ligado(contato) && !contato.resultado);
+  const semDisparo = Boolean(contato && !ligado(contato) && !contato.resultado);
+  const livre = comLista && (!contato || Boolean(contato.resultado));
+  const acabou = livre && faltam === 0;
+
+  mostrar('btnIniciar', livre && !acabou);
+  $('txtIniciar').textContent = feitos === 0 && !contato ? 'Ligar para o primeiro lead' : 'Ligar para o próximo';
+  mostrar('caixaResultado', emLigacao && !tela.anotando);
+  mostrar('caixaAnotacao', emLigacao && tela.anotando);
+  mostrar('lnkDiscarDeNovo', emLigacao && !tela.anotando);
+  mostrar('caixaErro', semDisparo && !tela.discando);
+  mostrar('caixaFim', acabou);
+
+  for (const id of ['btnIniciar', 'btnNaoAtendeu', 'btnAtendeu', 'btnDiscarDeNovo', 'btnPular', 'lnkDiscarDeNovo']) {
+    $(id).disabled = tela.discando;
+  }
+}
+
+// ---------- Configurações ----------
+
+async function sha256(texto) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function renderConfig() {
+  const liberada = tela.configLiberada;
+  const aberta = liberada ? !$('conteudoConfig').hidden : !$('formSenha').hidden;
+  $('cadeado').classList.toggle('aberto', liberada);
+  $('cadeado').setAttribute('aria-label', liberada ? 'desbloqueado' : 'bloqueado');
+  $('abrirConfig').setAttribute('aria-expanded', String(aberta));
+  $('infoToken').textContent = MODO_GOOGLE
+    ? (tela.tokenNoServidor
+      ? 'O token da Api4Com está salvo na sua conta Google. Para trocar, cole o novo e clique em Salvar.'
+      : 'Nenhum token salvo. Cole o token da Api4Com e clique em Salvar (fica salvo na sua conta Google).')
+    : EH_EXTENSAO
+    ? 'Na extensão, preencha o token da Api4Com (ou gere com e-mail e senha) para ligar sozinha.'
+    : tela.tokenNoServidor
+      ? 'O token da Api4Com já está guardado no servidor: não precisa preencher.'
+      : 'Nenhum token guardado no servidor. Preencha o token (ou gere com e-mail e senha) para ligar sozinha.';
+}
+
+function alternarConfig() {
+  if (tela.configLiberada) {
+    $('conteudoConfig').hidden = !$('conteudoConfig').hidden;
+  } else {
+    $('formSenha').hidden = !$('formSenha').hidden;
+    if (!$('formSenha').hidden) $('senhaConfig').focus();
+  }
+  renderConfig();
+}
+
+async function conferirSenha(evento) {
+  evento.preventDefault();
+  if (await sha256($('senhaConfig').value.trim()) !== HASH_SENHA_CONFIG) {
+    $('erroSenha').textContent = 'Senha incorreta.';
+    $('senhaConfig').select();
+    return;
+  }
+  tela.configLiberada = true;
+  $('senhaConfig').value = '';
+  $('erroSenha').textContent = '';
+  $('formSenha').hidden = true;
+  $('conteudoConfig').hidden = false;
+  renderConfig();
+}
+
+function trancarConfig() {
+  tela.configLiberada = false;
+  $('conteudoConfig').hidden = true;
+  $('statusConfig').textContent = '';
+  renderConfig();
+}
+
+function lerFormulario() {
+  return { ramal: $('ramal').value.trim(), token: $('token').value.trim() };
+}
+
+function preencherFormulario(c) {
+  $('ramal').value = c.ramal;
+  $('token').value = c.token;
+}
+
+async function salvarConfig() {
+  if (!tela.configLiberada) return;
+  if (MODO_GOOGLE) {
+    // Ramal e token ficam na conta Google (valem no celular e no PC); o token não volta para a tela
+    try {
+      const r = await servidor('salvarConfig', lerFormulario());
+      estado.config.ramal = r.ramal;
+      tela.tokenNoServidor = r.tokenSalvo;
+      $('token').value = '';
+      $('statusConfig').textContent = 'Configurações salvas na sua conta Google.';
+    } catch (erro) {
+      $('statusConfig').textContent = 'Não consegui salvar: ' + (erro.message || erro);
+    }
+    renderConfig();
+    return;
+  }
+  estado.config = lerFormulario();
+  await armazenamento.set({ config: estado.config });
+  $('statusConfig').textContent = 'Configurações salvas.';
+}
+
+// Login da Api4Com: devolve o token de acesso (campo "id" da resposta)
+async function gerarToken() {
+  const email = $('email').value.trim();
+  const senha = $('senha').value;
+  if (!email || !senha) { $('statusConfig').textContent = 'Preencha o e-mail e a senha.'; return; }
+  $('statusConfig').textContent = 'Gerando token…';
+  if (MODO_GOOGLE) {
+    const r = await servidor('gerarToken', email, senha).catch((e) => ({ erro: e.message || String(e) }));
+    $('senha').value = '';
+    if (r.erro) {
+      $('statusConfig').textContent = `Não consegui gerar o token (${r.erro}). Confira e-mail e senha, ou cole o token.`;
+    } else {
+      tela.tokenNoServidor = true;
+      $('statusConfig').textContent = 'Token gerado e salvo na sua conta Google.';
+      renderConfig();
+    }
+    return;
+  }
+  try {
+    const resposta = await fetch(URL_LOGIN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: senha }),
+    });
+    const dados = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || !dados.id) throw new Error(`HTTP ${resposta.status}`);
+    $('token').value = dados.id;
+    $('senha').value = '';
+    await salvarConfig();
+    $('statusConfig').textContent = 'Token gerado e salvo.';
+  } catch (erro) {
+    $('statusConfig').textContent = `Não consegui gerar o token (${erro.message}). ` +
+      'Confira e-mail e senha, ou peça o token de API ao administrador da Api4Com e cole no campo Token.';
+  }
+}
+
+// ---------- Início ----------
+
+async function iniciar() {
+  const chaves = ['arquivo', 'cabecalho', 'colRegistro', 'contatos', 'atual', 'filtroEtapa', 'ignoradas', 'config'];
+  const salvo = await armazenamento.get(chaves).catch(() => ({}));
+  // Listas salvas pela versão anterior não tinham estes campos
+  const contatos = (salvo.contatos || []).map((c) => ({
+    linha: [c.nome, c.telefone, c.etapa, c.campanha], ligadoEm: null, ligadoEmTexto: '', resultado: '', anotacao: '', ...c,
+  }));
+  Object.assign(estado, {
+    arquivo: salvo.arquivo || '',
+    cabecalho: salvo.cabecalho || (salvo.contatos ? ['Nome', 'Telefone', 'Etapa', 'Campanha'] : null),
+    colRegistro: salvo.colRegistro || {},
+    contatos,
+    atual: Number.isInteger(salvo.atual) ? salvo.atual : -1,
+    filtroEtapa: salvo.filtroEtapa || '',
+    ignoradas: salvo.ignoradas || 0,
+    config: {
+      ramal: salvo.config?.ramal || CONFIG_PADRAO.ramal,
+      token: salvo.config?.token || CONFIG_PADRAO.token,
+    },
+  });
+  preencherFormulario(estado.config);
+  if (MODO_GOOGLE) {
+    // A planilha Google é a fonte dos leads: sem importar, exportar nem modelo
+    for (const id of ['baixarModelo', 'rotuloImportar', 'exportar', 'btnExportarFim']) mostrar(id, false);
+    mostrar('btnAtualizar', true);
+    $('textoFim').textContent = 'Todos os leads selecionados já foram trabalhados. Os registros estão na planilha.';
+    $('token').placeholder = 'cole o token novo (vazio = manter o salvo)';
+  }
+  render();
+  renderConfig();
+
+  if (!MODO_GOOGLE && !EH_EXTENSAO) {
+    // No site, pergunta ao servidor se o token padrão está configurado
+    try {
+      const r = await fetch('/api/status', { cache: 'no-store' });
+      tela.tokenNoServidor = Boolean((await r.json()).tokenNoServidor);
+    } catch { /* sem servidor: segue sem token padrão */ }
+    renderConfig();
+  }
+
+  $('arquivo').addEventListener('change', importar);
+  $('exportar').addEventListener('click', exportar);
+  $('btnExportarFim').addEventListener('click', exportar);
+  $('filtroEtapa').addEventListener('change', async (e) => {
+    estado.filtroEtapa = e.target.value;
+    await salvar();
+    render();
+  });
+  $('btnIniciar').addEventListener('click', ligarParaProximo);
+  $('btnNaoAtendeu').addEventListener('click', naoAtendeu);
+  $('btnAtendeu').addEventListener('click', abrirAnotacao);
+  $('btnSalvarProximo').addEventListener('click', () => salvarAnotacao(true));
+  $('btnSoSalvar').addEventListener('click', () => salvarAnotacao(false));
+  $('btnCancelarAnotacao').addEventListener('click', () => { tela.anotando = false; render(); });
+  $('btnDiscarDeNovo').addEventListener('click', discarAtual);
+  $('lnkDiscarDeNovo').addEventListener('click', discarAtual);
+  $('btnPular').addEventListener('click', pular);
+  $('abrirConfig').addEventListener('click', alternarConfig);
+  $('formSenha').addEventListener('submit', conferirSenha);
+  $('trancarConfig').addEventListener('click', trancarConfig);
+  $('salvar').addEventListener('click', salvarConfig);
+  $('gerarToken').addEventListener('click', gerarToken);
+  $('ramal').addEventListener('change', salvarConfig);
+  $('token').addEventListener('change', salvarConfig);
+
+  if (MODO_GOOGLE) {
+    $('btnAtualizar').addEventListener('click', carregarPlanilhaGoogle);
+    await carregarPlanilhaGoogle();
+  }
+}
+
+iniciar();
+  </script>
+</body>
+</html>

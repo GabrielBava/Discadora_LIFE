@@ -26,12 +26,13 @@
 
   <section class="planilha">
     <div class="acoes">
-      <a class="btn contorno" href="modelo/modelo_discadora.xlsx" download="modelo_discadora.xlsx">Baixar modelo</a>
-      <label class="btn contorno">
+      <a id="baixarModelo" class="btn contorno" href="modelo/modelo_discadora.xlsx" download="modelo_discadora.xlsx">Baixar modelo</a>
+      <label id="rotuloImportar" class="btn contorno">
         Importar planilha
         <input id="arquivo" type="file" accept=".xlsx,.csv" hidden>
       </label>
       <button id="exportar" class="btn contorno" type="button" disabled>Exportar planilha</button>
+      <button id="btnAtualizar" class="btn contorno" type="button" hidden>Atualizar planilha</button>
     </div>
     <p id="infoLista" class="info">Nenhuma planilha importada.</p>
   </section>
@@ -104,7 +105,7 @@
 
     <div id="caixaFim" class="caixa-fim" hidden>
       <strong>Etapa concluída!</strong>
-      <span>Todos os leads selecionados já foram trabalhados. Exporte a planilha para guardar os registros.</span>
+      <span id="textoFim">Todos os leads selecionados já foram trabalhados. Exporte a planilha para guardar os registros.</span>
       <button id="btnExportarFim" class="btn principal" type="button">Exportar planilha</button>
     </div>
   </section>

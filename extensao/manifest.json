@@ -1,21 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Discadora LIFE",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Percorre uma planilha de leads e liga pela Api4Com, um contato por vez, quando você clica em Próximo.",
   "minimum_chrome_version": "116",
   "action": { "default_title": "Abrir a Discadora LIFE" },
   "icons": { "16": "icones/16.png", "48": "icones/48.png", "128": "icones/128.png" },
   "background": { "service_worker": "background.js" },
   "side_panel": { "default_path": "painel.html" },
-  "permissions": ["sidePanel", "storage"],
-  "host_permissions": ["https://*.api4com.com/*"],
-  "content_scripts": [
-    {
-      "matches": ["https://*.api4com.com/*"],
-      "js": ["discar.js"],
-      "all_frames": true,
-      "run_at": "document_idle"
-    }
-  ]
+  "permissions": ["sidePanel", "storage", "clipboardWrite"],
+  "host_permissions": ["https://api.api4com.com/*"]
 }

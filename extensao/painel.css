@@ -68,5 +68,5 @@ details input[type=text], details input[type=password] {
   display: block; width: 100%; margin-top: 4px; padding: 6px 8px;
   border: 1px solid #d1d9e0; border-radius: 6px; font: inherit;
 }
-details label.linha, fieldset label { display: flex; gap: 6px; align-items: flex-start; }
-fieldset { border: 1px solid #eef1f4; border-radius: 6px; margin: 10px 0; }
+details.login { margin: 10px 0; padding: 8px 10px; border-color: #eef1f4; }
+details.login summary { font-weight: 400; font-size: 13px; }

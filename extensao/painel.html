@@ -46,35 +46,24 @@
   <details id="configuracoes">
     <summary>Configurações</summary>
 
-    <fieldset>
-      <legend>Como ligar</legend>
-      <label><input type="radio" name="modo" value="pagina"> Colar o número na página da Api4Com e clicar em ligar</label>
-      <label><input type="radio" name="modo" value="api"> Usar a API da Api4Com (o ramal toca e depois liga para o lead)</label>
-    </fieldset>
+    <p class="info">Para ligar sozinha, a Discadora usa a API da Api4Com: ela manda a Api4Com ligar
+      do seu ramal para o lead, e a ligação acontece no seu Webphone. Sem token, o Próximo apenas
+      copia o número para você colar no Webphone.</p>
 
-    <label>Prefixo antes do número (opcional, ex.: 0, 55 ou +55)
-      <input id="prefixo" type="text" placeholder="vazio = número como está na planilha">
+    <label>Seu ramal na Api4Com (aparece no topo do Webphone, ao lado de "Usuário")
+      <input id="ramal" type="text" inputmode="numeric" placeholder="ex.: 1001">
+    </label>
+    <label>Token da API da Api4Com
+      <input id="token" type="password" autocomplete="off" placeholder="cole aqui ou gere abaixo">
     </label>
 
-    <div id="cfgPagina">
-      <label>Seletor do campo de número (vazio = automático)
-        <input id="seletorCampo" type="text" placeholder="ex.: #numero">
-      </label>
-      <label>Seletor do botão Ligar (vazio = automático)
-        <input id="seletorBotao" type="text" placeholder="ex.: button.btn-ligar">
-      </label>
-      <label class="linha"><input id="usarEnter" type="checkbox"> Ligar apertando Enter em vez de clicar no botão</label>
-      <button id="testar" class="botao secundario" type="button">Testar: mostrar campo e botão na página (não liga)</button>
-    </div>
-
-    <div id="cfgApi">
-      <label>Token da Api4Com
-        <input id="token" type="password" autocomplete="off">
-      </label>
-      <label>Ramal
-        <input id="ramal" type="text" placeholder="ex.: 1001">
-      </label>
-    </div>
+    <details class="login">
+      <summary>Gerar o token com o e-mail e a senha da Api4Com</summary>
+      <label>E-mail <input id="email" type="text" autocomplete="off"></label>
+      <label>Senha <input id="senha" type="password" autocomplete="off"></label>
+      <button id="gerarToken" class="botao secundario" type="button">Gerar token</button>
+      <p class="info">A senha é enviada só para a Api4Com e não fica salva.</p>
+    </details>
 
     <button id="salvar" class="botao secundario" type="button">Salvar configurações</button>
     <p id="statusConfig" class="info"></p>

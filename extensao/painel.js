@@ -1,20 +1,12 @@
 // Painel da Discadora LIFE.
-// Fluxo: importar planilha -> clicar em Próximo -> mostra o lead, cola o número na
-// Api4Com e liga. A ligação nunca é encerrada por aqui: quem desliga é o usuário
-// (ou a Api4Com, ex.: caixa postal). Só avança quando o usuário clica em Próximo.
+// Fluxo: importar planilha -> clicar em Próximo -> mostra o lead e pede para a Api4Com
+// ligar do ramal do usuário para o lead. A ligação nunca é encerrada por aqui: quem
+// desliga é o usuário no Webphone (ou a Api4Com, ex.: caixa postal). Só avança quando
+// o usuário clica em Próximo.
 
-const URL_API_DISCAR = 'https://api.api4com.com/api/v1/dialer';
-const ABA_API4COM = /^https:\/\/([^/]+\.)?api4com\.com\//;
+const API4COM = 'https://api.api4com.com/api/v1';
 
-const CONFIG_PADRAO = {
-  modo: 'pagina',
-  prefixo: '',
-  seletorCampo: '',
-  seletorBotao: '',
-  usarEnter: false,
-  token: '',
-  ramal: '',
-};
+const CONFIG_PADRAO = { ramal: '', token: '' };
 
 let estado = { arquivo: '', contatos: [], indice: -1, ignoradas: 0, config: { ...CONFIG_PADRAO } };
 
@@ -69,49 +61,16 @@ function montarContatos(linhas) {
 
 // ---------- Discagem ----------
 
-function numeroParaDiscar(contato) {
-  return (estado.config.prefixo || '').trim() + contato.numero;
-}
-
-async function acharAbaApi4com() {
-  const [ativa] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (ativa && ABA_API4COM.test(ativa.url || '')) return ativa;
-  const abas = await chrome.tabs.query({ url: 'https://*.api4com.com/*' });
-  return abas.find((a) => a.windowId === ativa?.windowId) || abas[0] || null;
-}
-
-// Envia o pedido para a página da Api4Com: primeiro para a página principal,
-// depois (se o campo não estiver lá) para os iframes dela.
-async function pedirParaPagina(tipo, numero, config) {
-  const aba = await acharAbaApi4com();
-  if (!aba) throw new Error('Abra a página da Api4Com em uma aba deste navegador.');
-
-  const msg = {
-    tipo,
-    numero,
-    somenteTopo: true,
-    config: { seletorCampo: config.seletorCampo, seletorBotao: config.seletorBotao, usarEnter: config.usarEnter },
-  };
-  let resposta;
-  try {
-    resposta = await chrome.tabs.sendMessage(aba.id, msg, { frameId: 0 });
-  } catch {
-    throw new Error('A página da Api4Com não respondeu. Recarregue a aba da Api4Com (F5) e tente de novo.');
-  }
-  if (resposta?.erro === 'seletor') throw new Error('Seletor inválido em Configurações. Confira o texto digitado.');
-  if (!resposta?.ok) {
-    try { resposta = await chrome.tabs.sendMessage(aba.id, { ...msg, somenteTopo: false }); } catch { resposta = null; }
-  }
-  if (!resposta?.ok) {
-    throw new Error('Não encontrei o campo de número na página da Api4Com. Ajuste o seletor em Configurações.');
-  }
-  return resposta;
+// Formato internacional que a Api4Com usa: (11) 99999-8888 -> +5511999998888
+function numeroInternacional(digitos) {
+  let d = digitos.replace(/^0+/, '');
+  if (d.length === 10 || d.length === 11) d = '55' + d; // só DDD + número: é do Brasil
+  return '+' + d;
 }
 
 async function discarPelaApi(numero, contato) {
   const { token, ramal } = estado.config;
-  if (!token || !ramal) throw new Error('Preencha o token e o ramal da Api4Com em Configurações.');
-  const resposta = await fetch(URL_API_DISCAR, {
+  const resposta = await fetch(`${API4COM}/dialer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: token },
     body: JSON.stringify({
@@ -120,6 +79,9 @@ async function discarPelaApi(numero, contato) {
       metadata: { nome: contato.nome, etapa: contato.etapa, campanha: contato.campanha },
     }),
   });
+  if (resposta.status === 401) {
+    throw new Error('A Api4Com recusou o token (expirado ou inválido). Gere um novo em Configurações.');
+  }
   if (!resposta.ok) {
     const detalhe = (await resposta.text().catch(() => '')).slice(0, 200);
     throw new Error(`A Api4Com recusou a ligação (HTTP ${resposta.status}). ${detalhe}`);
@@ -129,18 +91,26 @@ async function discarPelaApi(numero, contato) {
 async function ligarContatoAtual() {
   const contato = estado.contatos[estado.indice];
   if (!contato) return;
-  const numero = numeroParaDiscar(contato);
+  const numero = numeroInternacional(contato.numero);
+  const ultimo = estado.indice === estado.contatos.length - 1 ? ' Este é o último contato da lista.' : '';
+  const { token, ramal } = estado.config;
 
   $('proximo').disabled = true;
   $('discarDeNovo').hidden = true;
-  mostrarStatus(`Discando ${numero}…`);
   try {
-    if (estado.config.modo === 'api') await discarPelaApi(numero, contato);
-    else await pedirParaPagina('discadora:discar', numero, estado.config);
-    const ultimo = estado.indice === estado.contatos.length - 1;
+    if (!token || !ramal) {
+      await navigator.clipboard.writeText(contato.numero);
+      mostrarStatus(
+        `Número ${contato.numero} copiado. Cole no Webphone (Ctrl+V) e clique em Discar. ` +
+        'Para a Discadora ligar sozinha, preencha o ramal e o token em Configurações.' + ultimo
+      );
+      return;
+    }
+    mostrarStatus(`Pedindo à Api4Com para ligar para ${numero}…`);
+    await discarPelaApi(numero, contato);
     mostrarStatus(
-      `Ligação iniciada para ${numero}. Quando a ligação terminar, clique em Próximo.` +
-      (ultimo ? ' Este é o último contato da lista.' : ''),
+      `Ligação para ${numero} enviada à Api4Com pelo ramal ${ramal}. Se o Webphone tocar, atenda. ` +
+      'Quando terminar e desligar, clique em Próximo.' + ultimo,
       'ok'
     );
   } catch (erro) {
@@ -212,32 +182,12 @@ async function importar() {
 // ---------- Configurações ----------
 
 function lerFormulario() {
-  return {
-    modo: document.querySelector('input[name=modo]:checked')?.value || 'pagina',
-    prefixo: $('prefixo').value.trim(),
-    seletorCampo: $('seletorCampo').value.trim(),
-    seletorBotao: $('seletorBotao').value.trim(),
-    usarEnter: $('usarEnter').checked,
-    token: $('token').value.trim(),
-    ramal: $('ramal').value.trim(),
-  };
+  return { ramal: $('ramal').value.trim(), token: $('token').value.trim() };
 }
 
 function preencherFormulario(c) {
-  document.querySelector(`input[name=modo][value=${c.modo}]`).checked = true;
-  $('prefixo').value = c.prefixo;
-  $('seletorCampo').value = c.seletorCampo;
-  $('seletorBotao').value = c.seletorBotao;
-  $('usarEnter').checked = c.usarEnter;
-  $('token').value = c.token;
   $('ramal').value = c.ramal;
-  alternarModo();
-}
-
-function alternarModo() {
-  const modo = lerFormulario().modo;
-  $('cfgPagina').hidden = modo !== 'pagina';
-  $('cfgApi').hidden = modo !== 'api';
+  $('token').value = c.token;
 }
 
 async function salvarConfig() {
@@ -246,16 +196,27 @@ async function salvarConfig() {
   $('statusConfig').textContent = 'Configurações salvas.';
 }
 
-async function testarPagina() {
-  $('statusConfig').textContent = 'Procurando na página da Api4Com…';
+// Login da Api4Com: devolve o token de acesso (campo "id" da resposta)
+async function gerarToken() {
+  const email = $('email').value.trim();
+  const senha = $('senha').value;
+  if (!email || !senha) { $('statusConfig').textContent = 'Preencha o e-mail e a senha.'; return; }
+  $('statusConfig').textContent = 'Gerando token…';
   try {
-    const r = await pedirParaPagina('discadora:testar', '', lerFormulario());
-    $('statusConfig').textContent = 'Campo de número encontrado (destacado em laranja na página). ' +
-      (r.usarEnter ? 'A ligação será feita apertando Enter.'
-        : r.botao ? 'Botão Ligar encontrado (também destacado).'
-          : 'Botão Ligar NÃO encontrado: será usado Enter. Se não funcionar, informe o seletor do botão.');
+    const resposta = await fetch(`${API4COM}/users/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: senha }),
+    });
+    const dados = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || !dados.id) throw new Error(`HTTP ${resposta.status}`);
+    $('token').value = dados.id;
+    $('senha').value = '';
+    await salvarConfig();
+    $('statusConfig').textContent = 'Token gerado e salvo.';
   } catch (erro) {
-    $('statusConfig').textContent = erro.message;
+    $('statusConfig').textContent = `Não consegui gerar o token (${erro.message}). ` +
+      'Confira e-mail e senha, ou peça o token de API ao administrador da Api4Com e cole no campo Token.';
   }
 }
 
@@ -277,8 +238,9 @@ async function iniciar() {
   $('proximo').addEventListener('click', proximo);
   $('discarDeNovo').addEventListener('click', ligarContatoAtual);
   $('salvar').addEventListener('click', salvarConfig);
-  $('testar').addEventListener('click', testarPagina);
-  document.querySelectorAll('input[name=modo]').forEach((r) => r.addEventListener('change', alternarModo));
+  $('gerarToken').addEventListener('click', gerarToken);
+  $('ramal').addEventListener('change', salvarConfig);
+  $('token').addEventListener('change', salvarConfig);
 }
 
 iniciar();

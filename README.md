@@ -26,9 +26,12 @@ O repositório já vem com o `vercel.json` pronto: não há etapa de build, o si
 
 1. Na Vercel: **Add New → Project** e importe este repositório.
 2. Não precisa escolher framework nem comando de build: o `vercel.json` define tudo (inclusive se o projeto tiver sido criado como Angular).
-3. **Deploy.** O endereço do site abre direto na Discadora.
+3. **Token padrão (recomendado):** em **Settings → Environment Variables**, crie a variável `API4COM_TOKEN` com o token da API da Api4Com, marcada para **Production** e **Preview**. Assim o site liga sem ninguém precisar digitar token, e o token fica só no servidor: não aparece no código nem no navegador.
+4. **Deploy** (ou **Redeploy**, se o projeto já existia: variáveis novas só valem depois de um novo deploy). O endereço do site abre direto na Discadora.
 
-No site, a planilha, o ramal e o token ficam salvos no navegador de cada pessoa (não no servidor).
+> **Nunca coloque o token ou a senha da Api4Com no código.** Este repositório é público.
+
+No site, a planilha e os registros ficam salvos no navegador de cada pessoa (não no servidor).
 
 ## Instalar como extensão (opcional, uma vez por computador)
 
@@ -40,12 +43,16 @@ No site, a planilha, o ramal e o token ficam salvos no navegador de cada pessoa 
 
 ## Configuração (uma vez por pessoa)
 
-Abra a Discadora (site ou ícone da extensão) e clique em **Configurações** no fim do painel:
+As **Configurações** ficam no fim do painel e são **protegidas por senha** (peça ao administrador). Elas voltam a trancar ao recarregar a página ou ao clicar em **Trancar**.
 
-- **Ramal:** o seu ramal da Api4Com. Ele aparece no topo do Webphone, ao lado de "Usuário".
-- **Token da API:** clique em **Gerar o token com o e-mail e a senha da Api4Com**, preencha e clique em **Gerar token**. A senha vai só para a Api4Com e não fica salva. Se a sua empresa fornecer um token de API, também pode colar direto no campo.
+- **Ramal:** já vem com o ramal padrão (`1204`). Quem usar outro ramal troca aqui. Ele aparece no topo do Webphone, ao lado de "Usuário".
+- **Token da API:**
+  - **No site**, se o `API4COM_TOKEN` estiver configurado na Vercel, não precisa preencher (o painel avisa).
+  - **Na extensão**, ou para usar um token próprio no site, cole o token ou clique em **Gerar o token com o e-mail e a senha da Api4Com**. A senha vai só para a Api4Com e não fica salva.
 
-Se o token vencer, a Discadora avisa: é só gerar de novo.
+Se o token vencer, a Discadora avisa: atualize o `API4COM_TOKEN` na Vercel (e faça um Redeploy) ou gere um novo em Configurações.
+
+A senha das Configurações é uma trava simples contra mudanças por engano. Ela não protege o site: quem tiver o endereço do site consegue usar a Discadora.
 
 **Sem token configurado**, a Discadora ainda funciona no modo manual: o botão de ligar mostra o lead e **copia o número**; você cola no Webphone (Ctrl+V) e clica em Discar. A data/hora registrada é a da cópia.
 
@@ -95,7 +102,7 @@ A planilha, os registros das ligações, o ramal e o token ficam salvos **só ne
 
 ```
 vercel.json            configuração do site na Vercel (sem build)
-api/                   funções da Vercel que repassam login e ligação para a Api4Com
+api/                   funções da Vercel: repassam login e ligação para a Api4Com e informam se há token no servidor
 extensao/
   painel.html/css/js   a tela (planilha, filtro, contagens, ligação pela API, registros)
   planilha.js          leitura de .xlsx/.csv e geração do .xlsx exportado (sem bibliotecas externas)

@@ -109,31 +109,45 @@
     </div>
   </section>
 
-  <details id="configuracoes" class="configuracoes">
-    <summary>Configurações</summary>
+  <section id="configuracoes" class="configuracoes">
+    <button id="abrirConfig" class="cabecalho-config" type="button" aria-expanded="false">
+      <span>Configurações</span>
+      <svg id="cadeado" class="cadeado" viewBox="0 0 24 24" aria-label="bloqueado"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    </button>
 
-    <p class="info">Para ligar sozinha, a Discadora usa a API da Api4Com: ela manda a Api4Com ligar
-      do seu ramal para o lead, e a ligação acontece no seu Webphone. Sem token, o botão de ligar
-      apenas copia o número para você colar no Webphone.</p>
+    <form id="formSenha" class="form-senha" hidden>
+      <label>Digite a senha para abrir as configurações
+        <input id="senhaConfig" type="password" inputmode="numeric" autocomplete="off">
+      </label>
+      <button class="btn contorno" type="submit">Desbloquear</button>
+      <p id="erroSenha" class="info"></p>
+    </form>
 
-    <label>Seu ramal na Api4Com (aparece no topo do Webphone, ao lado de "Usuário")
-      <input id="ramal" type="text" inputmode="numeric" placeholder="ex.: 1001">
-    </label>
-    <label>Token da API da Api4Com
-      <input id="token" type="password" autocomplete="off" placeholder="cole aqui ou gere abaixo">
-    </label>
+    <div id="conteudoConfig" hidden>
+      <p id="infoToken" class="info"></p>
 
-    <details class="login">
-      <summary>Gerar o token com o e-mail e a senha da Api4Com</summary>
-      <label>E-mail <input id="email" type="text" autocomplete="off"></label>
-      <label>Senha <input id="senha" type="password" autocomplete="off"></label>
-      <button id="gerarToken" class="btn contorno" type="button">Gerar token</button>
-      <p class="info">A senha é enviada só para a Api4Com e não fica salva.</p>
-    </details>
+      <label>Seu ramal na Api4Com (aparece no topo do Webphone, ao lado de "Usuário")
+        <input id="ramal" type="text" inputmode="numeric" placeholder="ex.: 1001">
+      </label>
+      <label>Token da API da Api4Com (opcional no site)
+        <input id="token" type="password" autocomplete="off" placeholder="vazio = usar o token do servidor">
+      </label>
 
-    <button id="salvar" class="btn contorno" type="button">Salvar configurações</button>
-    <p id="statusConfig" class="info"></p>
-  </details>
+      <details class="login">
+        <summary>Gerar o token com o e-mail e a senha da Api4Com</summary>
+        <label>E-mail <input id="email" type="text" autocomplete="off"></label>
+        <label>Senha <input id="senha" type="password" autocomplete="off"></label>
+        <button id="gerarToken" class="btn contorno" type="button">Gerar token</button>
+        <p class="info">A senha é enviada só para a Api4Com e não fica salva.</p>
+      </details>
+
+      <div class="duplo">
+        <button id="salvar" class="btn contorno" type="button">Salvar</button>
+        <button id="trancarConfig" class="btn contorno" type="button">Trancar</button>
+      </div>
+      <p id="statusConfig" class="info"></p>
+    </div>
+  </section>
 
   <script src="planilha.js"></script>
   <script src="painel.js"></script>

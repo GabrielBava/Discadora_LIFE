@@ -28,7 +28,11 @@ const armazenamento = EH_EXTENSAO ? chrome.storage.local : {
   },
 };
 
-const CONFIG_PADRAO = { ramal: '', token: '' };
+// Ramal padrão. O token padrão NÃO fica aqui: no site ele está na variável de
+// ambiente API4COM_TOKEN da Vercel e é usado pela função /api/discar.
+const CONFIG_PADRAO = { ramal: '1204', token: '' };
+// Senha que libera as Configurações (guardada só como SHA-256)
+const HASH_SENHA_CONFIG = 'e68adee72e4d3c421f15cc33523be1c38208e4489b91d5e426503d99c5a7d790';
 const SEM_ETAPA = '(sem etapa)';
 const TITULOS_REGISTRO = { ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação' };
 
@@ -44,7 +48,7 @@ const estado = {
   config: { ...CONFIG_PADRAO },
 };
 // Estado só da tela
-const tela = { discando: false, anotando: false, mensagem: null };
+const tela = { discando: false, anotando: false, mensagem: null, tokenNoServidor: false, configLiberada: false };
 
 const $ = (id) => document.getElementById(id);
 
@@ -175,7 +179,7 @@ async function discarPelaApi(numero, contato) {
   const { token, ramal } = estado.config;
   const resposta = await fetch(URL_DISCAR, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: token },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: token } : {}) },
     body: JSON.stringify({
       extension: ramal,
       phone: numero,
@@ -183,7 +187,7 @@ async function discarPelaApi(numero, contato) {
     }),
   });
   if (resposta.status === 401) {
-    throw new Error('A Api4Com recusou o token (expirado ou inválido). Gere um novo em Configurações.');
+    throw new Error('A Api4Com recusou o token (vencido, inválido ou não configurado). Atualize o token em Configurações ou na Vercel.');
   }
   if (!resposta.ok) {
     const detalhe = (await resposta.text().catch(() => '')).slice(0, 200);
@@ -196,6 +200,7 @@ async function discarAtual() {
   const contato = contatoAtual();
   if (!contato || tela.discando) return;
   const { token, ramal } = estado.config;
+  const temToken = Boolean(token) || (!EH_EXTENSAO && tela.tokenNoServidor);
   const numero = numeroInternacional(contato.numero);
 
   tela.discando = true;
@@ -203,7 +208,7 @@ async function discarAtual() {
   tela.mensagem = { texto: `Discando ${telefoneLegivel(contato)}…` };
   render();
   try {
-    if (!token || !ramal) {
+    if (!temToken || !ramal) {
       await navigator.clipboard.writeText(contato.numero);
       tela.mensagem = {
         texto: 'Número copiado. Cole no Webphone (Ctrl+V) e clique em Discar. ' +
@@ -430,6 +435,56 @@ function render() {
 
 // ---------- Configurações ----------
 
+async function sha256(texto) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function renderConfig() {
+  const liberada = tela.configLiberada;
+  const aberta = liberada ? !$('conteudoConfig').hidden : !$('formSenha').hidden;
+  $('cadeado').classList.toggle('aberto', liberada);
+  $('cadeado').setAttribute('aria-label', liberada ? 'desbloqueado' : 'bloqueado');
+  $('abrirConfig').setAttribute('aria-expanded', String(aberta));
+  $('infoToken').textContent = EH_EXTENSAO
+    ? 'Na extensão, preencha o token da Api4Com (ou gere com e-mail e senha) para ligar sozinha.'
+    : tela.tokenNoServidor
+      ? 'O token da Api4Com já está guardado no servidor: não precisa preencher.'
+      : 'Nenhum token guardado no servidor. Preencha o token (ou gere com e-mail e senha) para ligar sozinha.';
+}
+
+function alternarConfig() {
+  if (tela.configLiberada) {
+    $('conteudoConfig').hidden = !$('conteudoConfig').hidden;
+  } else {
+    $('formSenha').hidden = !$('formSenha').hidden;
+    if (!$('formSenha').hidden) $('senhaConfig').focus();
+  }
+  renderConfig();
+}
+
+async function conferirSenha(evento) {
+  evento.preventDefault();
+  if (await sha256($('senhaConfig').value.trim()) !== HASH_SENHA_CONFIG) {
+    $('erroSenha').textContent = 'Senha incorreta.';
+    $('senhaConfig').select();
+    return;
+  }
+  tela.configLiberada = true;
+  $('senhaConfig').value = '';
+  $('erroSenha').textContent = '';
+  $('formSenha').hidden = true;
+  $('conteudoConfig').hidden = false;
+  renderConfig();
+}
+
+function trancarConfig() {
+  tela.configLiberada = false;
+  $('conteudoConfig').hidden = true;
+  $('statusConfig').textContent = '';
+  renderConfig();
+}
+
 function lerFormulario() {
   return { ramal: $('ramal').value.trim(), token: $('token').value.trim() };
 }
@@ -440,6 +495,7 @@ function preencherFormulario(c) {
 }
 
 async function salvarConfig() {
+  if (!tela.configLiberada) return;
   estado.config = lerFormulario();
   await armazenamento.set({ config: estado.config });
   $('statusConfig').textContent = 'Configurações salvas.';
@@ -486,10 +542,23 @@ async function iniciar() {
     atual: Number.isInteger(salvo.atual) ? salvo.atual : -1,
     filtroEtapa: salvo.filtroEtapa || '',
     ignoradas: salvo.ignoradas || 0,
-    config: { ...CONFIG_PADRAO, ...(salvo.config || {}) },
+    config: {
+      ramal: salvo.config?.ramal || CONFIG_PADRAO.ramal,
+      token: salvo.config?.token || CONFIG_PADRAO.token,
+    },
   });
   preencherFormulario(estado.config);
   render();
+  renderConfig();
+
+  // No site, pergunta ao servidor se o token padrão está configurado
+  if (!EH_EXTENSAO) {
+    try {
+      const r = await fetch('/api/status', { cache: 'no-store' });
+      tela.tokenNoServidor = Boolean((await r.json()).tokenNoServidor);
+    } catch { /* sem servidor: segue sem token padrão */ }
+    renderConfig();
+  }
 
   $('arquivo').addEventListener('change', importar);
   $('exportar').addEventListener('click', exportar);
@@ -508,6 +577,9 @@ async function iniciar() {
   $('btnDiscarDeNovo').addEventListener('click', discarAtual);
   $('lnkDiscarDeNovo').addEventListener('click', discarAtual);
   $('btnPular').addEventListener('click', pular);
+  $('abrirConfig').addEventListener('click', alternarConfig);
+  $('formSenha').addEventListener('submit', conferirSenha);
+  $('trancarConfig').addEventListener('click', trancarConfig);
   $('salvar').addEventListener('click', salvarConfig);
   $('gerarToken').addEventListener('click', gerarToken);
   $('ramal').addEventListener('change', salvarConfig);

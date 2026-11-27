@@ -1234,6 +1234,7 @@ async function carregarPlanilhaGoogle() {
     if (!dados.cabecalho) throw new Error('a linha 1 precisa ter os títulos (Nome, Telefone, Etapa, Campanha).');
     Object.assign(estado, dados, { arquivo: r.nome });
     estado.config.ramal = r.ramal;
+    $('ramal').value = r.ramal || '';
     tela.tokenNoServidor = r.tokenSalvo;
     // Lead em andamento = o último que foi ligado e ainda não tem resultado
     estado.atual = -1;
@@ -1476,8 +1477,8 @@ function renderConfig() {
   $('abrirConfig').setAttribute('aria-expanded', String(aberta));
   $('infoToken').textContent = MODO_GOOGLE
     ? (tela.tokenNoServidor
-      ? 'O token da Api4Com está salvo na sua conta Google. Para trocar, cole o novo e clique em Salvar.'
-      : 'Nenhum token salvo. Cole o token da Api4Com e clique em Salvar (fica salvo na sua conta Google).')
+      ? 'O token da Api4Com está salvo na sua conta Google. O ramal é descoberto pelo token. Para trocar, cole o novo e clique em Salvar.'
+      : 'Nenhum token salvo. Cole o SEU token da Api4Com e clique em Salvar: o ramal é descoberto sozinho e tudo fica salvo na sua conta Google.')
     : EH_EXTENSAO
     ? 'Na extensão, preencha o token da Api4Com (ou gere com e-mail e senha) para ligar sozinha.'
     : tela.tokenNoServidor
@@ -1533,9 +1534,12 @@ async function salvarConfig() {
     try {
       const r = await servidor('salvarConfig', lerFormulario());
       estado.config.ramal = r.ramal;
+      $('ramal').value = r.ramal || '';
       tela.tokenNoServidor = r.tokenSalvo;
       $('token').value = '';
-      $('statusConfig').textContent = 'Configurações salvas na sua conta Google.';
+      $('statusConfig').textContent = !r.tokenSalvo ? 'Salvo. Falta colar o token da Api4Com.'
+        : r.ramal ? `Salvo na sua conta Google. Ramal ${r.ramal}${r.ramalDetectado ? ' (descoberto pelo token)' : ''}.`
+          : 'Token salvo, mas não encontrei o ramal dele na Api4Com. Confira se o token é do seu usuário.';
     } catch (erro) {
       $('statusConfig').textContent = 'Não consegui salvar: ' + (erro.message || erro);
     }
@@ -1560,7 +1564,8 @@ async function gerarToken() {
       $('statusConfig').textContent = `Não consegui gerar o token (${r.erro}). Confira e-mail e senha, ou cole o token.`;
     } else {
       tela.tokenNoServidor = true;
-      $('statusConfig').textContent = 'Token gerado e salvo na sua conta Google.';
+      if (r.ramal) { estado.config.ramal = r.ramal; $('ramal').value = r.ramal; }
+      $('statusConfig').textContent = 'Token gerado e salvo na sua conta Google.' + (r.ramal ? ` Ramal ${r.ramal}.` : '');
       renderConfig();
     }
     return;
@@ -1624,6 +1629,8 @@ async function iniciar() {
     mostrar('btnAtualizar', true);
     $('textoFim').textContent = 'Todos os leads selecionados já foram trabalhados. Os registros estão na planilha.';
     $('token').placeholder = 'cole o token novo (vazio = manter o salvo)';
+    $('ramal').value = '';
+    $('ramal').placeholder = 'automático (descoberto pelo token)';
   }
   render();
   renderConfig();

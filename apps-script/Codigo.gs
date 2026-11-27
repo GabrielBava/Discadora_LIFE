@@ -5,7 +5,8 @@
  * arquivo HTML "Discadora". Ele:
  *  - mostra a Discadora (doGet), que abre no celular e no PC;
  *  - lê os leads da primeira aba da planilha;
- *  - liga pela API da Api4Com usando o ramal e o token salvos na sua conta Google;
+ *  - liga pela API da Api4Com com o token salvo na sua conta Google; o ramal é descoberto
+ *    pelo próprio token (e buscado de novo se mudar), então cada colaborador só cola o token;
  *  - grava "Data/hora da ligação", "Resultado", "Anotação" e "Reunião agendada" nas
  *    colunas ao lado dos dados.
  *
@@ -20,7 +21,6 @@
  */
 
 const API4COM = 'https://api.api4com.com/api/v1';
-const RAMAL_PADRAO = '1204';
 const TITULOS_REGISTRO = {
   ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação', agendamento: 'Reunião agendada',
 };
@@ -73,18 +73,19 @@ function discar(ref, dados) {
       props.deleteProperty('ULTIMA_CHAMADA');
     }
 
-    const resposta = UrlFetchApp.fetch(`${API4COM}/calls`, {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { Authorization: config.token },
-      payload: JSON.stringify({
-        extension: config.ramal,
-        caller: config.ramal,
-        called: String(dados.telefone),
-        metadata: { gateway: GATEWAY, callRef: `dl-${Date.now()}` },
-      }),
-      muteHttpExceptions: true,
-    });
+    // O ramal vem do token; se ainda não foi descoberto, descobre agora
+    let ramal = config.ramal || atualizarRamal_(config.token);
+    if (!ramal) return { erro: 'Não encontrei o seu ramal na Api4Com. Confira se o token é do seu usuário (com plano ativo).' };
+
+    let resposta = ligar_(config.token, ramal, dados.telefone);
+    if (resposta.getResponseCode() === 404) {
+      // Ramal não encontrado: ele mudou. Busca o atual pelo token e tenta uma vez de novo.
+      const novo = atualizarRamal_(config.token);
+      if (novo && novo !== ramal) {
+        ramal = novo;
+        resposta = ligar_(config.token, ramal, dados.telefone);
+      }
+    }
     const status = resposta.getResponseCode();
     if (status < 200 || status >= 300) return { erro: mensagemErro_(status, resposta.getContentText()) };
 
@@ -95,7 +96,7 @@ function discar(ref, dados) {
     const agora = new Date();
     const col = colunasRegistro_(aba);
     aba.getRange(linha, col.ligadoEm).setValue(agora).setNumberFormat('dd/mm/yyyy hh:mm');
-    return { ligadoEm: agora.getTime(), ramal: config.ramal };
+    return { ligadoEm: agora.getTime(), ramal };
   } finally {
     trava.releaseLock();
   }
@@ -126,12 +127,19 @@ function registrar(ref, campos) {
 
 // ---------- Configurações (ficam na sua conta Google, valem em todos os aparelhos) ----------
 
+// Ao salvar um token, o ramal é descoberto por ele. O ramal digitado só vale se não der
+// para descobrir (ou se só o ramal foi alterado).
 function salvarConfig(novo) {
   const props = PropertiesService.getUserProperties();
-  if (novo && novo.ramal) props.setProperty('RAMAL', String(novo.ramal).trim());
-  if (novo && novo.token) props.setProperty('API4COM_TOKEN', String(novo.token).trim());
+  novo = novo || {};
+  let detectado = '';
+  if (novo.token) {
+    props.setProperty('API4COM_TOKEN', String(novo.token).trim());
+    detectado = atualizarRamal_(String(novo.token).trim());
+  }
+  if (!detectado && novo.ramal) props.setProperty('RAMAL', String(novo.ramal).trim());
   const config = config_();
-  return { ramal: config.ramal, tokenSalvo: Boolean(config.token) };
+  return { ramal: config.ramal, tokenSalvo: Boolean(config.token), ramalDetectado: Boolean(detectado) };
 }
 
 /**
@@ -157,10 +165,40 @@ function gerarToken(email, senha) {
   });
   const token = (permanente.getResponseCode() === 200 && json_(permanente).id) || temporario;
   PropertiesService.getUserProperties().setProperty('API4COM_TOKEN', token);
-  return { tokenSalvo: true, semValidade: token !== temporario };
+  const ramal = atualizarRamal_(token);
+  return { tokenSalvo: true, semValidade: token !== temporario, ramal };
 }
 
 // ---------- Auxiliares (o "_" no fim esconde a função da página) ----------
+
+function ligar_(token, ramal, telefone) {
+  return UrlFetchApp.fetch(`${API4COM}/calls`, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: token },
+    payload: JSON.stringify({
+      extension: ramal,
+      caller: ramal,
+      called: String(telefone),
+      metadata: { gateway: GATEWAY, callRef: `dl-${Date.now()}` },
+    }),
+    muteHttpExceptions: true,
+  });
+}
+
+// Descobre o ramal do dono do token (GET /integrations, gateway "sippulse") e guarda.
+// Devolve '' se não encontrar.
+function atualizarRamal_(token) {
+  const r = UrlFetchApp.fetch(`${API4COM}/integrations?${encodeURIComponent('filter[where][gateway]')}=sippulse`, {
+    headers: { Authorization: token },
+    muteHttpExceptions: true,
+  });
+  if (r.getResponseCode() !== 200) return '';
+  const lista = json_(r);
+  const ramal = Array.isArray(lista) && lista[0] && lista[0].metadata ? String(lista[0].metadata.username || '') : '';
+  if (ramal) PropertiesService.getUserProperties().setProperty('RAMAL', ramal);
+  return ramal;
+}
 
 // Encerra uma ligação feita por POST /calls. Devolve true se ela ainda estava ativa.
 function encerrar_(id, token) {
@@ -194,7 +232,7 @@ function json_(resposta) {
 function config_() {
   const props = PropertiesService.getUserProperties();
   return {
-    ramal: props.getProperty('RAMAL') || RAMAL_PADRAO,
+    ramal: props.getProperty('RAMAL') || '',
     token: props.getProperty('API4COM_TOKEN') || '',
   };
 }

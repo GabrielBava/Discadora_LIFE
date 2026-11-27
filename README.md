@@ -3,7 +3,7 @@
 Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **Api4Com**. Funciona de três jeitos, com as mesmas telas:
 
 - **Planilha Google (recomendado):** a Discadora abre por um link do Google, no celular ou no PC, lê os leads direto da planilha e grava os registros nas colunas ao lado. Ramal e token ficam salvos na sua conta Google.
-- **Site (Vercel):** abre pelo link do site; você importa a planilha (.xlsx/.csv) e exporta com os registros.
+- **Site (Vercel):** abre pelo link do site; você importa a planilha (.xlsx/.csv) e exporta com os registros. É de uso pessoal: usa o token guardado na Vercel e o ramal 1204 como padrão. Para a equipe, use a Planilha Google.
 - **Extensão do Chrome/Edge:** igual ao site, mas como painel na lateral do navegador.
 
 **O que ela faz:**
@@ -41,7 +41,7 @@ Configuração única, uns 5 minutos:
    - **Implantar**
 7. Autorize: escolha sua conta. Se aparecer "O Google não verificou este app", clique em **Avançado → Acessar (não seguro)** e depois em **Permitir**. É o seu próprio script, por isso o aviso.
 8. Copie o **URL do app da Web** (termina em `/exec`). Abra no celular e no PC, logado na mesma conta Google. No celular, use **Adicionar à tela inicial**.
-9. Na Discadora: **Configurações** → senha → cole o **token da Api4Com** → **Salvar**. O ramal já vem como `1204`. Ramal e token ficam salvos na sua conta Google e valem no celular e no PC. O token não aparece na planilha nem no código.
+9. Na Discadora: **Configurações** → senha → cole o **seu token da Api4Com** → **Salvar**. O **ramal é descoberto sozinho pelo token** e aparece no campo Ramal. Token e ramal ficam salvos na sua conta Google e valem no celular e no PC. O token não aparece na planilha nem no código.
 
 **No dia a dia:**
 
@@ -50,6 +50,29 @@ Configuração única, uns 5 minutos:
 - Na primeira ligação, a Discadora cria logo depois da última coluna: **Data/hora da ligação**, **Resultado**, **Anotação** e **Reunião agendada**. Se essas colunas já existirem, ela usa as que existem (numa planilha que já tinha as três primeiras, a "Reunião agendada" é criada ao lado).
 - Se a planilha mudar de ordem enquanto você liga, a Discadora encontra o lead pelo telefone antes de gravar.
 - Fechou e abriu de novo (até em outro aparelho)? Ela continua no lead que estava em ligação, porque o andamento está na própria planilha.
+
+**Ramal que muda:** ninguém precisa digitar ramal. A Discadora descobre o ramal pelo token. Se a Api4Com responder que o ramal não existe mais, ela busca o ramal atual do usuário e refaz a ligação sozinha. Isso segue a orientação da documentação da Api4Com.
+
+### Replicar para outros colaboradores
+
+A Api4Com exige que **cada pessoa ligue com o próprio token**, e o token define o ramal. Por isso cada colaborador tem **a sua cópia** da planilha, com o código junto e a lista de leads dele.
+
+**Uma vez (quem já usa a Discadora):**
+
+1. Na sua planilha da Discadora: **Arquivo → Fazer uma cópia**, com o nome "Discadora LIFE – Modelo". A cópia leva o código junto. Seu token **não** vai junto, porque ele fica na sua conta Google, não na planilha.
+2. No modelo, apague os leads (deixe só a linha 1 com os títulos) e as colunas de registro (Data/hora da ligação, Resultado, Anotação, Reunião agendada).
+3. **Compartilhar** o modelo com os colaboradores como **Leitor**.
+
+**Cada colaborador (uns 5 minutos):**
+
+1. **Webphone:** instalado no Chrome e logado com o **próprio usuário** da Api4Com, com status "Online".
+2. **Token:** no Portal da Api4Com, **Tokens de acesso → Novo Token de Acesso → validade "Nunca expira"** → copiar. Ou use depois o botão "Gerar o token com o e-mail e a senha", na Discadora.
+3. Abrir o link do modelo e clicar em **Arquivo → Fazer uma cópia**. A cópia fica no Drive dele, já com o código.
+4. Colar os leads dele na cópia (primeira aba, títulos na linha 1).
+5. Na cópia: **Extensões → Apps Script → Implantar → Nova implantação →** engrenagem **→ App da Web**. "Executar como": **Eu**; "Quem pode acessar": **Somente eu**. **Implantar** e autorizar ("Avançado → Acessar" se aparecer o aviso).
+6. Abrir o link que termina em `/exec` (no PC e no celular) → **Configurações** → senha → colar **o token dele** → **Salvar**. O ramal dele aparece sozinho.
+
+Pronto: cada um liga com o próprio token e ramal, e os registros vão para a planilha de cada um.
 
 **Quando a Discadora for atualizada:** cole de novo os dois arquivos (passos 3 e 4), salve e vá em **Implantar → Gerenciar implantações →** lápis **→ Versão: Nova versão → Implantar**. O link continua o mesmo.
 

@@ -12,10 +12,15 @@ Painel que percorre a sua planilha de leads, um contato por vez, ligando pela **
 2. Se quiser, filtra uma **etapa** para ligar só para os leads dela.
 3. Você clica em **Ligar**: o painel mostra o lead (nome, telefone, etapa atual e campanha) e pede para a Api4Com **ligar do seu ramal para o lead**. A ligação acontece no seu **Webphone da Api4Com**, e a data/hora do disparo fica registrada.
 4. A ligação fica em andamento. **A Discadora não desliga sozinha**: quem desliga é você no Webphone, ou a própria Api4Com (por exemplo, quando cai na caixa postal). A única exceção: a Api4Com só permite **uma ligação por vez**, então, quando você clica para ligar para o próximo (ou discar de novo), a Discadora encerra antes a ligação anterior, se ela ainda estiver ativa.
-5. Ao terminar, você registra o resultado:
+5. Ao terminar, você registra o resultado com um dos quatro botões:
    - **Não atendeu**: registra, encerra a ligação (se o lead ainda estiver chamando) e já liga para o próximo lead da etapa.
-   - **Atendeu**: abre um campo para anotar o que foi falado. Depois, **Salvar e ligar para o próximo** ou **Só salvar** (para pausar).
-6. Nada é discado sem o seu clique. **Exportar planilha** baixa a planilha com as colunas **Data/hora da ligação, Resultado e Anotação** preenchidas.
+   - **Atendeu**: abre um campo para anotar o que foi falado.
+   - **Agendou** (em destaque): pede a **data e a hora da reunião** e uma observação opcional.
+   - **Descartar**: registra o lead como descartado e abre um campo para escrever o motivo.
+
+   Em Atendeu, Agendou e Descartar, você escolhe **Salvar e ligar para o próximo** ou **Só salvar** (para pausar).
+6. Nada é discado sem o seu clique. Os registros vão para as colunas **Data/hora da ligação, Resultado, Anotação e Reunião agendada** (na Planilha Google, direto na planilha; no site e na extensão, pelo botão **Exportar planilha**).
+7. Abaixo das Configurações ficam duas tabelas simples: os **10 últimos registros** (nome, etapa, telefone e status colorido: Atendeu verde, Não atendeu vermelho, Agendou laranja, Descartado cinza) e os **10 próximos** da fila da etapa escolhida. Em tela larga elas ficam lado a lado; no celular, uma embaixo da outra.
 
 > **Por que pela API e não colando o número na tela do Webphone?** O Webphone da Api4Com é uma extensão do Chrome, e o Chrome não permite que uma extensão mexa na tela de outra. A API da Api4Com faz o mesmo papel: a chamada sai do seu ramal e aparece no seu Webphone.
 
@@ -42,7 +47,7 @@ Configuração única, uns 5 minutos:
 
 - Deixe o **Webphone da Api4Com aberto e Online no PC**, em **um navegador só**. A Api4Com liga primeiro para o seu ramal (o Webphone atende sozinho) e depois para o lead. Você pode disparar as ligações pelo celular. Com o Webphone fechado ou offline, a Discadora avisa: "O Webphone não atendeu".
 - Lead novo: cole na planilha e clique em **Atualizar planilha** na Discadora.
-- Na primeira ligação, a Discadora cria logo depois da última coluna: **Data/hora da ligação**, **Resultado** e **Anotação**. Se essas colunas já existirem, ela usa as que existem.
+- Na primeira ligação, a Discadora cria logo depois da última coluna: **Data/hora da ligação**, **Resultado**, **Anotação** e **Reunião agendada**. Se essas colunas já existirem, ela usa as que existem (numa planilha que já tinha as três primeiras, a "Reunião agendada" é criada ao lado).
 - Se a planilha mudar de ordem enquanto você liga, a Discadora encontra o lead pelo telefone antes de gravar.
 - Fechou e abriu de novo (até em outro aparelho)? Ela continua no lead que estava em ligação, porque o andamento está na própria planilha.
 
@@ -118,11 +123,12 @@ Se der erro ao ligar, aparecem **Discar de novo** e **Pular lead**. Para ligar d
 
 **Planilha exportada:** as mesmas colunas da planilha importada, mais:
 
-| Data/hora da ligação | Resultado | Anotação |
-|---|---|---|
-| 26/11/2026 14:20 | Atendeu | Pediu retorno na sexta às 10h |
+| Data/hora da ligação | Resultado | Anotação | Reunião agendada |
+|---|---|---|---|
+| 26/11/2026 14:20 | Agendou | Reunião por vídeo | 02/12/2026 15:30 |
+| 26/11/2026 14:31 | Descartado | Sem interesse, já tem consórcio | |
 
-O resultado pode ser `Atendeu`, `Não atendeu` ou `Pulado`. A data/hora é uma data de verdade no Excel (dá para filtrar e ordenar).
+O resultado pode ser `Atendeu`, `Não atendeu`, `Agendou`, `Descartado` ou `Pulado`. As datas são datas de verdade no Excel/Planilhas (dá para filtrar e ordenar).
 
 ## Como a Discadora fala com a Api4Com
 

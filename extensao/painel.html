@@ -74,18 +74,29 @@
       <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
     </button>
 
-    <div id="caixaResultado" class="duplo" hidden>
-      <button id="btnNaoAtendeu" class="btn principal" type="button">
-        <strong>Não atendeu</strong><small>encerra e liga para o próximo</small>
+    <div id="caixaResultado" class="quatro" hidden>
+      <button id="btnNaoAtendeu" class="btn res res-nao" type="button">
+        <strong>Não atendeu</strong><small>liga p/ o próximo</small>
       </button>
-      <button id="btnAtendeu" class="btn escuro" type="button">
-        <strong>Atendeu</strong><small>registrar conversa</small>
+      <button id="btnAtendeu" class="btn res res-atendeu" type="button">
+        <strong>Atendeu</strong><small>anotar conversa</small>
+      </button>
+      <button id="btnAgendou" class="btn res res-agendou" type="button">
+        <strong>Agendou</strong><small>data da reunião</small>
+      </button>
+      <button id="btnDescartar" class="btn res res-descartar" type="button">
+        <strong>Descartar</strong><small>escrever motivo</small>
       </button>
     </div>
 
     <div id="caixaAnotacao" class="caixa-anotacao" hidden>
-      <label for="anotacao" class="sobretitulo escuro">O que foi falado?</label>
+      <p id="tituloAnotacao" class="titulo-anotacao">Atendeu</p>
+      <label id="rotuloAgendamento" class="sobretitulo escuro" hidden>Data e hora da reunião
+        <input id="agendamento" type="datetime-local">
+      </label>
+      <label id="rotuloAnotacao" for="anotacao" class="sobretitulo escuro">O que foi falado?</label>
       <textarea id="anotacao" rows="4" placeholder="Ex.: tem interesse, pediu retorno na sexta às 10h."></textarea>
+      <p id="erroAnotacao" class="erro-anotacao" hidden></p>
       <button id="btnSalvarProximo" class="btn principal" type="button">
         <span>Salvar e ligar para o próximo</span>
         <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
@@ -147,6 +158,25 @@
         <button id="trancarConfig" class="btn contorno" type="button">Trancar</button>
       </div>
       <p id="statusConfig" class="info"></p>
+    </div>
+  </section>
+
+  <section id="historico" class="historico" hidden>
+    <div class="cartao-tabela">
+      <h3>Últimos 10 registros</h3>
+      <table>
+        <thead><tr><th>Nome</th><th>Etapa</th><th>Telefone</th><th>Status</th></tr></thead>
+        <tbody id="tabelaUltimos"></tbody>
+      </table>
+      <p id="vazioUltimos" class="info">Nenhuma ligação feita ainda.</p>
+    </div>
+    <div class="cartao-tabela">
+      <h3>Próximos 10</h3>
+      <table>
+        <thead><tr><th>Nome</th><th>Etapa</th><th>Telefone</th><th>Status</th></tr></thead>
+        <tbody id="tabelaProximos"></tbody>
+      </table>
+      <p id="vazioProximos" class="info">Ninguém na fila desta etapa.</p>
     </div>
   </section>
 

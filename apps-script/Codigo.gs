@@ -6,7 +6,8 @@
  *  - mostra a Discadora (doGet), que abre no celular e no PC;
  *  - lê os leads da primeira aba da planilha;
  *  - liga pela API da Api4Com usando o ramal e o token salvos na sua conta Google;
- *  - grava "Data/hora da ligação", "Resultado" e "Anotação" nas colunas ao lado dos dados.
+ *  - grava "Data/hora da ligação", "Resultado", "Anotação" e "Reunião agendada" nas
+ *    colunas ao lado dos dados.
  *
  * O token NÃO fica neste código: ele é salvo pela tela de Configurações da Discadora
  * (PropertiesService, privado da sua conta).
@@ -20,7 +21,9 @@
 
 const API4COM = 'https://api.api4com.com/api/v1';
 const RAMAL_PADRAO = '1204';
-const TITULOS_REGISTRO = { ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação' };
+const TITULOS_REGISTRO = {
+  ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação', agendamento: 'Reunião agendada',
+};
 const GATEWAY = 'discadora-life';
 
 function doGet() {
@@ -98,7 +101,11 @@ function discar(ref, dados) {
   }
 }
 
-/** Grava o resultado (e a anotação) do lead. campos = { resultado, anotacao? } */
+/**
+ * Grava o resultado do lead. campos = { resultado, anotacao?, agendamento? }
+ * resultado: Não atendeu, Atendeu, Agendou, Descartado ou Pulado. agendamento: data/hora da
+ * reunião em milissegundos (só quando agendou).
+ */
 function registrar(ref, campos) {
   const trava = LockService.getScriptLock();
   trava.waitLock(20000);
@@ -108,6 +115,9 @@ function registrar(ref, campos) {
     const col = colunasRegistro_(aba);
     if ('resultado' in campos) aba.getRange(linha, col.resultado).setValue(textoSeguro_(campos.resultado));
     if ('anotacao' in campos) aba.getRange(linha, col.anotacao).setValue(textoSeguro_(campos.anotacao));
+    if (campos.agendamento) {
+      aba.getRange(linha, col.agendamento).setValue(new Date(Number(campos.agendamento))).setNumberFormat('dd/mm/yyyy hh:mm');
+    }
     return true;
   } finally {
     trava.releaseLock();

@@ -22,6 +22,8 @@
   --verde: #22c55e;
   --amarelo: #f5b400;
   --vermelho: #ef4444;
+  --verde-escuro: #15803d;
+  --vermelho-escuro: #b91c1c;
 }
 
 * { box-sizing: border-box; }
@@ -219,6 +221,51 @@ body {
 .status.erro { color: #fecaca; }
 .status.erro::before { background: var(--vermelho); }
 
+/* ---------- Botões de resultado (uma linha com quatro) ---------- */
+.quatro { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.btn.res {
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 4px;
+  border-radius: 18px;
+  text-align: center;
+}
+.btn.res strong { font-size: 14px; font-weight: 800; line-height: 1.15; }
+.btn.res small { font-size: 10px; font-weight: 600; opacity: 0.85; line-height: 1.2; }
+.res-nao { background: #fff; border-color: var(--vermelho); color: var(--vermelho-escuro); }
+.res-nao:hover { background: #fef2f2; }
+.res-atendeu { background: #fff; border-color: var(--verde); color: var(--verde-escuro); }
+.res-atendeu:hover { background: #f0fdf4; }
+.res-agendou {
+  background: var(--gradiente);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(255, 91, 20, 0.35);
+  transform: scale(1.04);
+}
+.res-agendou:hover { filter: brightness(1.06); }
+.res-agendou:active:not(:disabled) { transform: scale(1.01); }
+.res-descartar { background: #fff; border-color: #b5b5b5; color: #4a4a4a; }
+.res-descartar:hover { background: #f5f5f5; }
+
+.titulo-anotacao { margin: 4px 0 0; font-size: 18px; font-weight: 800; }
+#rotuloAgendamento input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 14px;
+  border: 2px solid var(--laranja);
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--texto);
+}
+.erro-anotacao { margin: 0; font-size: 13px; font-weight: 600; color: var(--vermelho-escuro); }
+
 /* ---------- Controles ---------- */
 .controles { display: grid; gap: 10px; }
 .caixa-anotacao { display: grid; gap: 10px; }
@@ -278,6 +325,51 @@ body {
 .configuracoes input:focus { border-color: var(--laranja); outline: none; }
 details.login { margin: 12px 0; padding: 8px 12px; border: 1px dashed var(--borda); border-radius: 14px; }
 details.login > summary { cursor: pointer; font-size: 13px; }
+
+/* ---------- Tabelas: últimos 10 e próximos 10 ---------- */
+.historico {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1080px, calc(100vw - 32px));
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+@media (min-width: 900px) { .historico { grid-template-columns: 1fr 1fr; } }
+.cartao-tabela { padding: 14px 16px; border: 1px solid var(--borda); border-radius: 18px; overflow-x: auto; }
+.cartao-tabela h3 { margin: 0 0 10px; font-size: 15px; font-weight: 800; }
+.cartao-tabela table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cartao-tabela th {
+  padding: 0 6px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--cinza);
+  border-bottom: 1px solid var(--borda);
+}
+.cartao-tabela td { padding: 8px 6px; border-bottom: 1px solid #f3f3f3; vertical-align: middle; }
+.cartao-tabela td:first-child { font-weight: 700; }
+.cartao-tabela td:nth-child(3) { white-space: nowrap; }
+.cartao-tabela tr:last-child td { border-bottom: 0; }
+.pilula {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff;
+  background: #9ca3af;
+}
+.pilula.atendeu { background: var(--verde); }
+.pilula.nao-atendeu { background: var(--vermelho); }
+.pilula.agendou { background: var(--laranja); }
+.pilula.descartado { background: #4b5563; }
+.pilula.em-ligacao { background: var(--amarelo); color: #3b2f00; }
+.pilula.na-fila { background: #eeeeee; color: #555; }
   </style>
 </head>
 <body>
@@ -347,18 +439,29 @@ details.login > summary { cursor: pointer; font-size: 13px; }
       <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
     </button>
 
-    <div id="caixaResultado" class="duplo" hidden>
-      <button id="btnNaoAtendeu" class="btn principal" type="button">
-        <strong>Não atendeu</strong><small>encerra e liga para o próximo</small>
+    <div id="caixaResultado" class="quatro" hidden>
+      <button id="btnNaoAtendeu" class="btn res res-nao" type="button">
+        <strong>Não atendeu</strong><small>liga p/ o próximo</small>
       </button>
-      <button id="btnAtendeu" class="btn escuro" type="button">
-        <strong>Atendeu</strong><small>registrar conversa</small>
+      <button id="btnAtendeu" class="btn res res-atendeu" type="button">
+        <strong>Atendeu</strong><small>anotar conversa</small>
+      </button>
+      <button id="btnAgendou" class="btn res res-agendou" type="button">
+        <strong>Agendou</strong><small>data da reunião</small>
+      </button>
+      <button id="btnDescartar" class="btn res res-descartar" type="button">
+        <strong>Descartar</strong><small>escrever motivo</small>
       </button>
     </div>
 
     <div id="caixaAnotacao" class="caixa-anotacao" hidden>
-      <label for="anotacao" class="sobretitulo escuro">O que foi falado?</label>
+      <p id="tituloAnotacao" class="titulo-anotacao">Atendeu</p>
+      <label id="rotuloAgendamento" class="sobretitulo escuro" hidden>Data e hora da reunião
+        <input id="agendamento" type="datetime-local">
+      </label>
+      <label id="rotuloAnotacao" for="anotacao" class="sobretitulo escuro">O que foi falado?</label>
       <textarea id="anotacao" rows="4" placeholder="Ex.: tem interesse, pediu retorno na sexta às 10h."></textarea>
+      <p id="erroAnotacao" class="erro-anotacao" hidden></p>
       <button id="btnSalvarProximo" class="btn principal" type="button">
         <span>Salvar e ligar para o próximo</span>
         <span class="seta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13m-5-6 6 6-6 6"/></svg></span>
@@ -420,6 +523,25 @@ details.login > summary { cursor: pointer; font-size: 13px; }
         <button id="trancarConfig" class="btn contorno" type="button">Trancar</button>
       </div>
       <p id="statusConfig" class="info"></p>
+    </div>
+  </section>
+
+  <section id="historico" class="historico" hidden>
+    <div class="cartao-tabela">
+      <h3>Últimos 10 registros</h3>
+      <table>
+        <thead><tr><th>Nome</th><th>Etapa</th><th>Telefone</th><th>Status</th></tr></thead>
+        <tbody id="tabelaUltimos"></tbody>
+      </table>
+      <p id="vazioUltimos" class="info">Nenhuma ligação feita ainda.</p>
+    </div>
+    <div class="cartao-tabela">
+      <h3>Próximos 10</h3>
+      <table>
+        <thead><tr><th>Nome</th><th>Etapa</th><th>Telefone</th><th>Status</th></tr></thead>
+        <tbody id="tabelaProximos"></tbody>
+      </table>
+      <p id="vazioProximos" class="info">Ninguém na fila desta etapa.</p>
     </div>
   </section>
 
@@ -763,7 +885,15 @@ const CONFIG_PADRAO = { ramal: '1204', token: '' };
 // Senha que libera as Configurações (guardada só como SHA-256)
 const HASH_SENHA_CONFIG = 'e68adee72e4d3c421f15cc33523be1c38208e4489b91d5e426503d99c5a7d790';
 const SEM_ETAPA = '(sem etapa)';
-const TITULOS_REGISTRO = { ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação' };
+const TITULOS_REGISTRO = {
+  ligadoEm: 'Data/hora da ligação', resultado: 'Resultado', anotacao: 'Anotação', agendamento: 'Reunião agendada',
+};
+// Como cada resultado abre a caixa de anotação
+const MODOS_ANOTACAO = {
+  Atendeu: { titulo: 'Atendeu', rotulo: 'O que foi falado?', exemplo: 'Ex.: tem interesse, pediu retorno na sexta às 10h.' },
+  Agendou: { titulo: 'Agendou reunião', rotulo: 'Observação (opcional)', exemplo: 'Ex.: reunião por vídeo com o casal.' },
+  Descartado: { titulo: 'Descartar lead', rotulo: 'Por que foi descartado?', exemplo: 'Ex.: não tem interesse; número errado.' },
+};
 
 // Dados salvos
 const estado = {
@@ -835,6 +965,8 @@ function montarContatos(linhas) {
 
     const ligadoEmBruto = pegar(colRegistro.ligadoEm);
     const data = ligadoEmBruto ? Planilha.excelParaData(ligadoEmBruto) : null;
+    const agendamentoBruto = pegar(colRegistro.agendamento);
+    const reuniao = agendamentoBruto ? Planilha.excelParaData(agendamentoBruto) : null;
     contatos.push({
       nome: pegar(colunas.nome),
       telefone,
@@ -846,6 +978,8 @@ function montarContatos(linhas) {
       ligadoEmTexto: data ? '' : ligadoEmBruto,
       resultado: pegar(colRegistro.resultado),
       anotacao: pegar(colRegistro.anotacao),
+      agendamento: reuniao ? reuniao.getTime() : null,
+      agendamentoTexto: reuniao ? '' : agendamentoBruto,
       posicao, // linha de dados (0 = primeira depois do cabeçalho)
     });
   });
@@ -1015,11 +1149,11 @@ async function ligarParaProximo() {
   await discarAtual();
 }
 
+// Grava o resultado do lead atual. campos = { resultado, anotacao?, agendamento? (ms) }
 // Devolve false se não conseguiu gravar (aí não avança para o próximo)
-async function registrar(resultado, anotacao) {
+async function registrar(campos) {
   const contato = contatoAtual();
   if (!contato) return false;
-  const campos = anotacao === undefined ? { resultado } : { resultado, anotacao };
   if (MODO_GOOGLE) {
     $('btnSalvarProximo').disabled = $('btnSoSalvar').disabled = true;
     try {
@@ -1033,6 +1167,7 @@ async function registrar(resultado, anotacao) {
     }
   }
   Object.assign(contato, campos);
+  if ('agendamento' in campos) contato.agendamentoTexto = '';
   tela.anotando = false;
   tela.mensagem = null;
   await salvar();
@@ -1040,24 +1175,52 @@ async function registrar(resultado, anotacao) {
 }
 
 async function naoAtendeu() {
-  if (await registrar('Não atendeu')) await ligarParaProximo();
+  if (await registrar({ resultado: 'Não atendeu' })) await ligarParaProximo();
 }
 
-function abrirAnotacao() {
-  tela.anotando = true;
-  $('anotacao').value = contatoAtual()?.anotacao || '';
+// Atendeu, Agendou e Descartado abrem a caixa (Agendou também pede a data da reunião)
+function abrirAnotacao(modo) {
+  const contato = contatoAtual();
+  const m = MODOS_ANOTACAO[modo];
+  tela.anotando = modo;
+  $('tituloAnotacao').textContent = m.titulo;
+  $('rotuloAnotacao').textContent = m.rotulo;
+  $('anotacao').placeholder = m.exemplo;
+  $('anotacao').value = contato?.anotacao || '';
+  $('agendamento').value = contato?.agendamento ? paraCampoDataHora(contato.agendamento) : '';
+  mostrar('rotuloAgendamento', modo === 'Agendou');
+  mostrar('erroAnotacao', false);
   render();
-  $('anotacao').focus();
+  (modo === 'Agendou' ? $('agendamento') : $('anotacao')).focus();
+}
+
+// ms -> "2026-11-27T15:30" (formato do campo de data e hora)
+function paraCampoDataHora(ms) {
+  const d = new Date(ms);
+  const dois = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}T${dois(d.getHours())}:${dois(d.getMinutes())}`;
 }
 
 async function salvarAnotacao(ligarDepois) {
-  if (!(await registrar('Atendeu', $('anotacao').value.trim()))) return;
+  const modo = tela.anotando;
+  const campos = { resultado: modo, anotacao: $('anotacao').value.trim() };
+  if (modo === 'Agendou') {
+    const quando = $('agendamento').value ? new Date($('agendamento').value) : null;
+    if (!quando || isNaN(quando)) {
+      $('erroAnotacao').textContent = 'Informe a data e a hora da reunião.';
+      mostrar('erroAnotacao', true);
+      $('agendamento').focus();
+      return;
+    }
+    campos.agendamento = quando.getTime();
+  }
+  if (!(await registrar(campos))) return;
   if (ligarDepois) await ligarParaProximo();
   else render();
 }
 
 async function pular() {
-  if (await registrar('Pulado')) await ligarParaProximo();
+  if (await registrar({ resultado: 'Pulado' })) await ligarParaProximo();
 }
 
 // Modo Planilhas Google: lê os leads (e os registros já feitos) direto da planilha
@@ -1123,6 +1286,7 @@ function exportar() {
     linha[col.ligadoEm] = c.ligadoEm ? new Date(c.ligadoEm) : c.ligadoEmTexto;
     linha[col.resultado] = c.resultado;
     linha[col.anotacao] = c.anotacao;
+    linha[col.agendamento] = c.agendamento ? new Date(c.agendamento) : (c.agendamentoTexto || '');
     linhas.push(linha);
   }
 
@@ -1183,13 +1347,12 @@ function render() {
     $('legEtapa').textContent = estado.filtroEtapa ? 'Nesta etapa' : 'Todas as etapas';
     $('numFaltam').textContent = faltam;
     $('barra').style.width = naFila.length ? `${(feitos / naFila.length) * 100}%` : '0';
-    const atenderam = naFila.filter((c) => c.resultado === 'Atendeu').length;
-    const naoAtenderam = naFila.filter((c) => c.resultado === 'Não atendeu').length;
-    $('resumo').textContent = [
-      plural(feitos, 'trabalhado', 'trabalhados'),
-      plural(atenderam, 'atendeu', 'atenderam'),
-      plural(naoAtenderam, 'não atendeu', 'não atenderam'),
-    ].join(' · ');
+    const quantos = (r) => naFila.filter((c) => c.resultado === r).length;
+    const partes = [
+      ['Atendeu', 'atendeu', 'atenderam'], ['Não atendeu', 'não atendeu', 'não atenderam'],
+      ['Agendou', 'agendou', 'agendaram'], ['Descartado', 'descartado', 'descartados'],
+    ].filter(([r]) => quantos(r) > 0).map(([r, um, varios]) => plural(quantos(r), um, varios));
+    $('resumo').textContent = [plural(feitos, 'trabalhado', 'trabalhados'), ...partes].join(' · ');
   }
 
   // Cartão do lead
@@ -1210,8 +1373,14 @@ function render() {
   let status = tela.mensagem;
   if (!status && contato) {
     const quando = contato.ligadoEm ? ` · ligação em ${dataHora(contato.ligadoEm)}` : '';
+    const nota = contato.anotacao ? `. "${contato.anotacao}"` : '';
     if (contato.resultado === 'Atendeu') {
-      status = { texto: 'Atendeu' + quando + (contato.anotacao ? `. "${contato.anotacao}"` : ''), tipo: 'atendeu' };
+      status = { texto: 'Atendeu' + quando + nota, tipo: 'atendeu' };
+    } else if (contato.resultado === 'Agendou') {
+      const reuniao = contato.agendamento ? dataHora(contato.agendamento) : contato.agendamentoTexto;
+      status = { texto: `Agendou reunião para ${reuniao}` + nota, tipo: 'atendeu' };
+    } else if (contato.resultado === 'Descartado') {
+      status = { texto: 'Descartado' + quando + nota, tipo: 'aviso' };
     } else if (contato.resultado) {
       status = { texto: contato.resultado + quando, tipo: 'aviso' };
     } else if (contato.ligadoEm) {
@@ -1240,9 +1409,56 @@ function render() {
   mostrar('caixaErro', semDisparo && !tela.discando);
   mostrar('caixaFim', acabou);
 
-  for (const id of ['btnIniciar', 'btnNaoAtendeu', 'btnAtendeu', 'btnDiscarDeNovo', 'btnPular', 'lnkDiscarDeNovo']) {
+  for (const id of ['btnIniciar', 'btnNaoAtendeu', 'btnAtendeu', 'btnAgendou', 'btnDescartar', 'btnDiscarDeNovo', 'btnPular', 'lnkDiscarDeNovo']) {
     $(id).disabled = tela.discando;
   }
+
+  renderTabelas(comLista, indices);
+}
+
+// ---------- Tabelas: últimos 10 e próximos 10 ----------
+
+const CLASSE_STATUS = {
+  Atendeu: 'atendeu', 'Não atendeu': 'nao-atendeu', Agendou: 'agendou', Descartado: 'descartado',
+  'Em ligação': 'em-ligacao', 'Na fila': 'na-fila',
+};
+
+function linhaTabela(c, status) {
+  const tr = document.createElement('tr');
+  for (const texto of [c.nome || '—', etapaDe(c), telefoneLegivel(c)]) {
+    const td = document.createElement('td');
+    td.textContent = texto;
+    tr.append(td);
+  }
+  const td = document.createElement('td');
+  const pilula = document.createElement('span');
+  pilula.className = 'pilula ' + (CLASSE_STATUS[status] || '');
+  pilula.textContent = status;
+  if (status === 'Agendou' && c.agendamento) pilula.title = 'Reunião: ' + dataHora(c.agendamento);
+  td.append(pilula);
+  tr.append(td);
+  return tr;
+}
+
+function renderTabelas(comLista, indices) {
+  mostrar('historico', comLista);
+  if (!comLista) return;
+
+  // Últimos 10: as ligações mais recentes (todas as etapas)
+  const ultimos = estado.contatos
+    .filter((c) => c.numero && c.ligadoEm)
+    .sort((a, b) => b.ligadoEm - a.ligadoEm)
+    .slice(0, 10);
+  $('tabelaUltimos').replaceChildren(...ultimos.map((c) => linhaTabela(c, c.resultado || 'Em ligação')));
+  mostrar('vazioUltimos', ultimos.length === 0);
+
+  // Próximos 10: quem vem depois na fila da etapa selecionada
+  const proximos = indices
+    .filter((i) => i !== estado.atual && !trabalhado(estado.contatos[i]))
+    .slice(0, 10)
+    .map((i) => estado.contatos[i]);
+  $('tabelaProximos').replaceChildren(...proximos.map((c) => linhaTabela(c, 'Na fila')));
+  mostrar('vazioProximos', proximos.length === 0);
 }
 
 // ---------- Configurações ----------
@@ -1384,7 +1600,8 @@ async function iniciar() {
   const salvo = await armazenamento.get(chaves).catch(() => ({}));
   // Listas salvas pela versão anterior não tinham estes campos
   const contatos = (salvo.contatos || []).map((c) => ({
-    linha: [c.nome, c.telefone, c.etapa, c.campanha], ligadoEm: null, ligadoEmTexto: '', resultado: '', anotacao: '', ...c,
+    linha: [c.nome, c.telefone, c.etapa, c.campanha], ligadoEm: null, ligadoEmTexto: '', resultado: '', anotacao: '',
+    agendamento: null, agendamentoTexto: '', ...c,
   }));
   Object.assign(estado, {
     arquivo: salvo.arquivo || '',
@@ -1430,7 +1647,9 @@ async function iniciar() {
   });
   $('btnIniciar').addEventListener('click', ligarParaProximo);
   $('btnNaoAtendeu').addEventListener('click', naoAtendeu);
-  $('btnAtendeu').addEventListener('click', abrirAnotacao);
+  $('btnAtendeu').addEventListener('click', () => abrirAnotacao('Atendeu'));
+  $('btnAgendou').addEventListener('click', () => abrirAnotacao('Agendou'));
+  $('btnDescartar').addEventListener('click', () => abrirAnotacao('Descartado'));
   $('btnSalvarProximo').addEventListener('click', () => salvarAnotacao(true));
   $('btnSoSalvar').addEventListener('click', () => salvarAnotacao(false));
   $('btnCancelarAnotacao').addEventListener('click', () => { tela.anotando = false; render(); });

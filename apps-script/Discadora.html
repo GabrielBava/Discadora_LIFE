@@ -1404,10 +1404,13 @@ function render() {
 
   mostrar('btnIniciar', livre && !acabou);
   $('txtIniciar').textContent = feitos === 0 && !contato ? 'Ligar para o primeiro lead' : 'Ligar para o próximo';
-  mostrar('caixaResultado', emLigacao && !tela.anotando);
-  mostrar('caixaAnotacao', emLigacao && tela.anotando);
+  // Os botões de atendimento aparecem sempre que há um lead na tela sem resultado,
+  // inclusive quando a ligação deu erro (ex.: para descartar um número inválido)
+  const pendente = emLigacao || semDisparo;
+  mostrar('caixaResultado', pendente && !tela.anotando);
+  mostrar('caixaAnotacao', pendente && tela.anotando);
   mostrar('lnkDiscarDeNovo', emLigacao && !tela.anotando);
-  mostrar('caixaErro', semDisparo && !tela.discando);
+  mostrar('caixaErro', semDisparo && !tela.discando && !tela.anotando);
   mostrar('caixaFim', acabou);
 
   for (const id of ['btnIniciar', 'btnNaoAtendeu', 'btnAtendeu', 'btnAgendou', 'btnDescartar', 'btnDiscarDeNovo', 'btnPular', 'lnkDiscarDeNovo']) {
